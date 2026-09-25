@@ -54,7 +54,6 @@ export default defineConfig( ( { mode } ) => ( {
 			],
 			input: {
 				'chat-editor-sidebar': src( 'entries/editor-sidebar.tsx' ),
-				'chat-standalone': src( 'entries/standalone.tsx' ),
 			},
 			output: {
 				format: 'es',

@@ -31,8 +31,8 @@ const AGENTIC_EDITOR_CHAT_BUILD_DIR = 'build/';
 /**
  * Register every chat-related script module and style.
  *
- * Registration is separate from enqueueing so both the editor sidebar and the
- * standalone screen can pull in the same graph.
+ * Registration is separate from enqueueing so any screen that mounts the chat
+ * can pull in the same graph.
  *
  * @return void
  */
@@ -124,7 +124,7 @@ add_filter( 'script_module_data_' . AGENTIC_EDITOR_CHAT_CONFIG_MODULE, 'agentic_
  * @return string[]
  */
 function agentic_editor_chat_build_files() {
-	return array( 'chat.css', 'chat-editor-sidebar.js', 'chat-standalone.js' );
+	return array( 'chat.css', 'chat-editor-sidebar.js' );
 }
 
 /**

@@ -17,9 +17,7 @@ const SIDEBAR = 'agentic-editor-chat/agentic-editor-chat';
  */
 async function pretendConnector( page: Page, available = true ) {
 	await page.route(
-		( url ) =>
-			url.pathname.endsWith( '/post-new.php' ) ||
-			url.pathname.endsWith( '/tools.php' ),
+		( url ) => url.pathname.endsWith( '/post-new.php' ),
 		async ( route ) => {
 			const response = await route.fetch();
 			const body = ( await response.text() ).replace(
@@ -157,8 +155,8 @@ test.describe( 'chat loop', () => {
 			},
 		] );
 		await pretendConnector( page );
-		await page.goto( '/wp-admin/tools.php?page=agentic-editor-chat' );
-		const panel = page.locator( '#agentic-editor-chat-root' );
+		await openEditor( page );
+		const panel = await openSidebar( page );
 
 		await panel.getByLabel( 'Message' ).fill( 'Hi' );
 		await panel.getByRole( 'button', { name: 'Send' } ).click();
@@ -261,8 +259,8 @@ test.describe( 'chat loop', () => {
 			},
 		] );
 		await pretendConnector( page );
-		await page.goto( '/wp-admin/tools.php?page=agentic-editor-chat' );
-		const panel = page.locator( '#agentic-editor-chat-root' );
+		await openEditor( page );
+		const panel = await openSidebar( page );
 
 		await panel.getByLabel( 'Message' ).fill( 'Hello there' );
 		await panel.getByRole( 'button', { name: 'Send' } ).click();
@@ -287,8 +285,8 @@ test.describe( 'chat loop', () => {
 
 	test( 'offers no way to send without a connector', async ( { page } ) => {
 		await pretendConnector( page, false );
-		await page.goto( '/wp-admin/tools.php?page=agentic-editor-chat' );
-		const panel = page.locator( '#agentic-editor-chat-root' );
+		await openEditor( page );
+		const panel = await openSidebar( page );
 
 		await panel.getByLabel( 'Message' ).fill( 'Hello' );
 		await expect(
@@ -296,7 +294,7 @@ test.describe( 'chat loop', () => {
 		).toBeDisabled();
 		await expect(
 			panel.getByRole( 'button', {
-				name: 'What can you help me with here?',
+				name: 'Summarize the blocks in this post.',
 			} )
 		).toBeDisabled();
 	} );
@@ -313,8 +311,8 @@ test.describe( 'chat loop', () => {
 			textTurn( 'Short answer.' ),
 		] );
 		await pretendConnector( page );
-		await page.goto( '/wp-admin/tools.php?page=agentic-editor-chat' );
-		const panel = page.locator( '#agentic-editor-chat-root' );
+		await openEditor( page );
+		const panel = await openSidebar( page );
 		const log = panel.getByRole( 'log' );
 
 		await panel.getByLabel( 'Message' ).fill( 'Long, please.' );

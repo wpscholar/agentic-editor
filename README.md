@@ -13,8 +13,6 @@ On block editor screens the plugin:
 3. Bridges each ability to `document.modelContext.registerTool()`, installing the [WebMCP polyfill](https://www.npmjs.com/package/@mcp-b/webmcp-polyfill) when the browser has no native support
 4. Adds an **AI Chat** sidebar that can call those tools
 
-There is also a standalone **Tools → AI Chat** screen running the same panel, to show the chat is not tied to the editor.
-
 | Ability | WebMCP tool name | Purpose |
 | --- | --- | --- |
 | `editor/get-editor-tree` | `editor_get-editor-tree` | Full hierarchical block tree (optional `maxDepth`) |
@@ -91,7 +89,7 @@ Gemini is the exception: it requires the thought signature it issued with a func
 
 ### Where the tools come from
 
-The chat offers whatever the page registered with WebMCP — nothing is hard-coded. In the block editor that is the twenty abilities above, so the assistant can read the block tree and edit the post. On the standalone screen there are usually none, and the chat answers questions instead. Tools registered by other plugins on the same page are picked up automatically.
+The chat offers whatever the page registered with WebMCP — nothing is hard-coded. In the block editor that is the twenty abilities above, so the assistant can read the block tree and edit the post. Tools registered by other plugins on the same page are picked up automatically.
 
 Tools this plugin registered are called through their own executor. Anything else goes through `document.modelContext.executeTool()`, which the polyfill always provides and native Chrome provides as an optional extension.
 
@@ -147,7 +145,6 @@ agentic-editor.php        # Plugin bootstrap; enqueues editor script modules
 includes/
   chat-rest.php            # /agentic-editor/v1/chat — one model turn per request
   chat-assets.php          # Script module registration + per-screen config
-  chat-admin-page.php      # Tools → AI Chat
 js/
   index.js                 # Entry: register abilities + bridge to WebMCP
   abilities.js             # Aggregates the ability modules below
@@ -170,7 +167,7 @@ src/                       # The chat panel (built with Vite into build/)
     reasoning.tsx          # The model's thinking, collapsed above the answer
     markdown.tsx           # Minimal Markdown → React elements
     ui/                    # shadcn components
-  entries/                 # One per mount: editor sidebar, standalone screen
+  entries/                 # One per mount: the editor sidebar
   lib/shims/               # react / react-dom / jsx-runtime → WordPress globals
   lib/wp.ts                # Typed window.wp access for the editor entry
   styles/chat.css          # Tailwind (no Preflight) + tokens scoped to .cdchat

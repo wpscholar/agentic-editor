@@ -26,7 +26,6 @@ Two goals:
 | `agentic-editor.php` | Plugin header, includes, `enqueue_block_editor_assets` |
 | `includes/chat-rest.php` | `/agentic-editor/v1/chat` — one AI Client turn per request |
 | `includes/chat-assets.php` | Script module registration, polyfill script, per-screen config |
-| `includes/chat-admin-page.php` | Tools → AI Chat |
 | `js/index.js` | Bootstrap: abilities → WebMCP bridge; sets `window.agenticEditorAbilities` |
 | `js/abilities.js` | Aggregates the ability modules into one `registerEditorAbilities()` |
 | `js/abilities/block-editor.js` | Block tree, insert/move/update/remove, transforms, selection, undo/redo |
@@ -37,7 +36,7 @@ Two goals:
 | `js/webmcp-tools.js` | Consumer side: list and call the page's tools |
 | `js/chat/config.js` | Reads the server config JSON; the only hand-written chat module left |
 | `js/types/globals.d.ts` | Loose types for the WordPress and WebMCP globals, for `checkJs` |
-| `vite.config.ts` | Build: React aliased to WordPress globals, two entries, one stylesheet |
+| `vite.config.ts` | Build: React aliased to WordPress globals, one entry per mount, one stylesheet |
 | `src/lib/shims/*` | Re-export `window.React` / `ReactDOM` / `ReactJSXRuntime` as ES modules |
 | `src/chat/transport.ts` | The AI SDK `ChatTransport`: one REST turn per round plus the tool loop |
 | `src/chat/transport.test.ts` | Vitest coverage of the tool loop; `vitest.config.ts` stubs the import-map externals |
@@ -49,7 +48,7 @@ Two goals:
 | `src/components/markdown.tsx` | Model output → React elements; never `dangerouslySetInnerHTML` |
 | `src/lib/wp.ts` | Typed access to `window.wp` for the editor entry |
 | `src/components/ui/*` | shadcn components — regenerate with the CLI, don't hand-edit |
-| `src/entries/*.tsx` | The two mounts (editor sidebar, standalone screen) |
+| `src/entries/*.tsx` | One file per mount; the editor sidebar is the only one |
 | `css/chat-chrome.css` | Layout for the wp-admin containers *around* the panel |
 | `bin/build-zip.sh` | Packaging; runs `npm run build` and strips source maps |
 | `bin/vendor-webmcp-polyfill.sh` | Re-copies the vendored polyfill from `node_modules` |
@@ -128,7 +127,7 @@ Two goals:
 ### PHP enqueue
 
 - Always `wp_enqueue_script_module( '@wordpress/abilities' )` so the import map exists
-- Register shared modules on `init` (see `agentic_editor_register_chat_modules`) so both the editor and the standalone screen can enqueue them
+- Register shared modules on `init` (see `agentic_editor_register_chat_modules`) so any screen that mounts the chat can enqueue them
 - Import submodules by their import-map ID, never by relative path. A relative import produces a second copy of the module under a different URL, which silently splits module-level state such as the local tool registry
 - Script modules cannot be localized — pass data with the `script_module_data_{$module_id}` filter and read the JSON tag on the client
 - Version scripts with `filemtime` for cache busting during development
@@ -179,12 +178,11 @@ After JS changes, hard-refresh the block editor (`post-new.php` or edit post):
 After chat changes, run `npm run build` first, then:
 
 1. The **AI Chat** sidebar opens from the editor's Plugins menu, and the tool count next to Send matches the ability count
-2. **Tools → AI Chat** renders the same panel and reports no page tools
-3. Without a connector, both say so instead of failing on send, and `GET /wp-json/agentic-editor/v1/chat/status` reports `hasAiClient: true`
-4. With a connector, a prompt that needs the editor ("summarize the blocks in this post") shows tool calls resolving to `Done` before the answer
-5. `window.React.version` is WordPress's React, and the console has no "two copies of React" or invalid-hook warnings
-6. wp-admin still looks like wp-admin on the screens the chat loads on — an `h1` on **Tools → AI Chat** stays 23px, which is the tell that Preflight has not leaked
-7. The composer stays on screen in the sidebar at a short viewport; the transcript scrolls, not the sidebar
+2. Without a connector, the sidebar says so instead of failing on send, and `GET /wp-json/agentic-editor/v1/chat/status` reports `hasAiClient: true`
+3. With a connector, a prompt that needs the editor ("summarize the blocks in this post") shows tool calls resolving to `Done` before the answer
+4. `window.React.version` is WordPress's React, and the console has no "two copies of React" or invalid-hook warnings
+5. wp-admin still looks like wp-admin around the chat — the editor's own chrome keeps its fonts and spacing, and `<html>` never picks up Tailwind's `ui-sans-serif` stack, which is the tell that Preflight has leaked
+6. The composer stays on screen in the sidebar at a short viewport; the transcript scrolls, not the sidebar
 
 ### Linting and types
 

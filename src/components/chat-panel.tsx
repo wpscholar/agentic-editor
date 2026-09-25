@@ -1,9 +1,9 @@
 /**
  * The chat panel.
  *
- * The same panel mounts into a block editor PluginSidebar and into a standalone
- * admin screen, so nothing here may assume the editor is present. Page context,
- * an optional attachment and starter prompts are the only things a mount
+ * The block editor sidebar is the only mount today, but the panel is kept free
+ * of editor assumptions so another screen can mount it. Page context, an
+ * optional attachment and starter prompts are the only things a mount
  * supplies.
  */
 

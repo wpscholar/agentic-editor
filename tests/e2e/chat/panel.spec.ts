@@ -81,38 +81,32 @@ test.describe( 'chat panel', () => {
 		expect( warnings ).toEqual( [] );
 	} );
 
-	test( 'Tools → AI Chat renders without tools and without leaking styles', async ( {
-		page,
+	test( 'the editor sidebar reports a missing connector and keeps admin styles', async ( {
+		editor,
 	} ) => {
-		await page.goto( '/wp-admin/tools.php?page=agentic-editor-chat' );
-
-		const panel = page.locator( '#agentic-editor-chat-root' );
+		await editor.evaluate( ( sidebar ) => {
+			( window as any ).wp.data
+				.dispatch( 'core/edit-post' )
+				.openGeneralSidebar( sidebar );
+		}, SIDEBAR );
+		const panel = editor.locator( '.cdchat-sidebar' );
 		await expect( panel.getByLabel( 'Message' ) ).toBeVisible();
-		await expect(
-			panel.getByRole( 'button', { name: 'No page tools' } )
-		).toBeVisible();
 
-		// The editor's abilities are not loaded here.
-		expect(
-			await page.evaluate(
-				() => ( window as any ).agenticEditorAbilities
-			)
-		).toBeUndefined();
-
-		// The panel fills the screen below the heading, whatever WordPress
-		// prints above it, and the composer stays on a short screen.
-		await page.setViewportSize( { width: 1280, height: 560 } );
+		// On a short screen the transcript gives way, not the composer.
+		await editor.setViewportSize( { width: 1280, height: 560 } );
 		await expect(
 			panel.getByRole( 'button', { name: 'Send' } )
 		).toBeInViewport();
 
-		// Tailwind's Preflight would reset admin headings; 23px is core's size.
-		await expect( page.locator( '.wrap > h1' ) ).toHaveCSS(
-			'font-size',
-			'23px'
-		);
+		// Tailwind's Preflight would give the root element its sans stack;
+		// wp-admin never sets one there.
+		expect(
+			await editor.evaluate(
+				() => getComputedStyle( document.documentElement ).fontFamily
+			)
+		).not.toContain( 'ui-sans-serif' );
 
-		const status = await chatStatus( page );
+		const status = await chatStatus( editor );
 		const notice = panel.getByText(
 			'No AI connector is configured, so the assistant cannot answer yet.'
 		);
@@ -127,14 +121,24 @@ test.describe( 'chat panel', () => {
 
 		const loaded = await page.evaluate( () => ( {
 			abilities: ( window as any ).agenticEditorAbilities,
-			chatRoot: !! document.querySelector( '#agentic-editor-chat-root' ),
+			chat: !! document.querySelector( '.cdchat' ),
 			importMap:
 				document.querySelector( 'script[type="importmap"]' )
 					?.textContent ?? '',
 		} ) );
 
 		expect( loaded.abilities ).toBeUndefined();
-		expect( loaded.chatRoot ).toBe( false );
+		expect( loaded.chat ).toBe( false );
 		expect( loaded.importMap ).not.toContain( '@agentic-editor/' );
+	} );
+
+	test( 'there is no standalone chat screen', async ( { page } ) => {
+		const response = await page.goto(
+			'/wp-admin/tools.php?page=agentic-editor-chat'
+		);
+
+		// wp-admin refuses a page slug nobody registered.
+		expect( response?.status() ).toBe( 403 );
+		await expect( page.locator( '.cdchat' ) ).toHaveCount( 0 );
 	} );
 } );
