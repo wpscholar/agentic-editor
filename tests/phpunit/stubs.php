@@ -90,3 +90,19 @@ class WP_REST_Server {
 	const READABLE  = 'GET';
 	const CREATABLE = 'POST';
 }
+
+class WP_Query {
+	/** @var array<string, mixed> */
+	public $query_vars;
+
+	/**
+	 * @param array<string, mixed> $query_vars Query vars.
+	 */
+	public function __construct( array $query_vars = array() ) {
+		$this->query_vars = $query_vars;
+	}
+
+	public function get( $key ) {
+		return $this->query_vars[ $key ] ?? '';
+	}
+}

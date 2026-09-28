@@ -18,6 +18,8 @@ export type Cleanup = {
 	pattern: ( id: number ) => void;
 	/** A `wp_pattern_category` term, by slug. */
 	category: ( slug: string ) => void;
+	/** An attachment, by ID. */
+	media: ( id: number ) => void;
 };
 
 type Fixtures = {
@@ -61,15 +63,23 @@ export const test = base.extend< Fixtures >( {
 	cleanup: async ( { editor }, use ) => {
 		const patternIds = new Set< number >();
 		const categorySlugs = new Set< string >();
+		const mediaIds = new Set< number >();
 
 		await use( {
 			pattern: ( id ) => patternIds.add( id ),
 			category: ( slug ) => categorySlugs.add( slug ),
+			media: ( id ) => mediaIds.add( id ),
 		} );
 
 		await editor.evaluate(
-			async ( { ids, slugs } ) => {
+			async ( { ids, slugs, media } ) => {
 				const apiFetch = ( window as any ).wp.apiFetch;
+				for ( const id of media ) {
+					await apiFetch( {
+						path: `/wp/v2/media/${ id }?force=true`,
+						method: 'DELETE',
+					} ).catch( () => {} );
+				}
 				for ( const id of ids ) {
 					await apiFetch( {
 						path: `/wp/v2/blocks/${ id }?force=true`,
@@ -90,7 +100,11 @@ export const test = base.extend< Fixtures >( {
 					}
 				}
 			},
-			{ ids: [ ...patternIds ], slugs: [ ...categorySlugs ] }
+			{
+				ids: [ ...patternIds ],
+				slugs: [ ...categorySlugs ],
+				media: [ ...mediaIds ],
+			}
 		);
 	},
 } );

@@ -18,6 +18,9 @@ export default defineConfig( {
 			'@agentic-editor/webmcp-polyfill': fileURLToPath(
 				new URL( './js/webmcp-polyfill.js', import.meta.url )
 			),
+			'@agentic-editor/abilities/shared': fileURLToPath(
+				new URL( './js/abilities/shared.js', import.meta.url )
+			),
 			'@wordpress/abilities': src( 'test/stubs/abilities.ts' ),
 			'@': src( '' ).replace( /\/$/, '' ),
 		},

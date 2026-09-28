@@ -13,6 +13,7 @@ import {
 	describeEditingLock,
 	getBlocksApi,
 	getData,
+	getResolveSelect,
 	registerAbilities,
 	requireBlock,
 	requireBlockType,
@@ -28,22 +29,6 @@ const PATTERN_BLOCK_NAME = 'core/block';
 // Core names user patterns after the block that references them, so a name
 // from these abilities is the same name the editor uses internally.
 const USER_PATTERN_PREFIX = 'core/block/';
-
-/**
- * Patterns arrive over REST, so they have to be awaited rather than read: a
- * plain select returns nothing until the resolver has finished.
- *
- * @return {(storeName: string) => Object} `wp.data.resolveSelect`.
- */
-function getResolveSelect() {
-	const { resolveSelect } = getData();
-	if ( typeof resolveSelect !== 'function' ) {
-		throw new Error(
-			'WordPress data resolvers are not available, so patterns cannot be loaded.'
-		);
-	}
-	return resolveSelect;
-}
 
 /**
  * @return {{ parse: (html: string, options?: Object) => Object[], serialize: (blocks: Object[]) => string }}

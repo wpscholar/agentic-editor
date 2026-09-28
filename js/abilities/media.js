@@ -1,16 +1,18 @@
 /**
- * Media abilities: generating images into the Media Library.
+ * Media abilities: finding images in the Media Library and generating new ones.
  *
  * The AI Client runs only in PHP, so generation happens behind the plugin's
- * `/agentic-editor/v1/image` endpoint. These abilities never place what they
- * make; the result carries the attributes `editor/insert-block` and
+ * `/agentic-editor/v1/image` endpoint. These abilities never place anything;
+ * each result carries the attributes `editor/insert-block` and
  * `editor/update-block` need, and the model places it with those.
  */
 
 import {
 	ABILITY_CATEGORY,
+	CORE_STORE,
 	assertEditorReady,
 	getData,
+	getResolveSelect,
 	isPlainObject,
 	registerAbilities,
 } from '@agentic-editor/abilities/shared';
@@ -82,12 +84,211 @@ function optionalString( value, label ) {
 	return value.trim() || undefined;
 }
 
+/**
+ * Attributes for a core/image block showing an attachment at full size.
+ *
+ * @param {{ id: number, url: string, alt?: string }} image
+ * @return {Record<string, unknown>}
+ */
+function imageBlockAttributes( image ) {
+	return {
+		id: image.id,
+		url: image.url,
+		alt: image.alt ?? '',
+		sizeSlug: 'full',
+		linkDestination: 'none',
+	};
+}
+
+const MAX_CAPTION_CHARS = 200;
+
+/**
+ * Plain text from a REST field that may be `{ raw, rendered }` or a string.
+ *
+ * @param {unknown} field
+ * @return {string}
+ */
+function fieldText( field ) {
+	if ( typeof field === 'string' ) {
+		return field;
+	}
+	if ( ! isPlainObject( field ) ) {
+		return '';
+	}
+	if ( typeof field.raw === 'string' ) {
+		return field.raw;
+	}
+	return typeof field.rendered === 'string'
+		? field.rendered.replace( /<[^>]*>/g, '' ).trim()
+		: '';
+}
+
+/**
+ * @param {Object} record Attachment entity record.
+ * @return {Object} What the model needs to recognize and place it.
+ */
+function summarizeAttachment( record ) {
+	const caption = fieldText( record.caption );
+	const summary = {
+		id: record.id,
+		url: record.source_url,
+		title: fieldText( record.title ),
+		alt: typeof record.alt_text === 'string' ? record.alt_text : '',
+		caption:
+			caption.length > MAX_CAPTION_CHARS
+				? `${ caption.slice( 0, MAX_CAPTION_CHARS ) }…`
+				: caption,
+		mimeType: record.mime_type,
+		width: record.media_details?.width ?? null,
+		height: record.media_details?.height ?? null,
+		date: record.date,
+	};
+
+	return record.media_type === 'image'
+		? { ...summary, blockAttributes: imageBlockAttributes( summary ) }
+		: summary;
+}
+
+/** @type {Object} */
+const searchMediaAbility = {
+	name: 'editor/search-media',
+	label: 'Search Media Library',
+	description:
+		"Finds files already in this site's Media Library, newest first, matching words in their title, alt text, caption, description or file name. Use this whenever the user refers to an existing, uploaded or Media Library image. Place a result by passing its blockAttributes to editor/insert-block as the attributes of a core/image block, or its id and url to editor/update-block for an existing image block (id, url), cover block (id, url) or media & text block (mediaId, mediaUrl). If nothing matches, tell the user rather than generating an image they did not ask for.",
+	category: ABILITY_CATEGORY.slug,
+	input_schema: {
+		type: 'object',
+		properties: {
+			search: {
+				type: 'string',
+				description:
+					'Words to look for. Try a single key word (lighthouse) before a phrase. Omit to list the most recent files.',
+			},
+			mediaType: {
+				type: 'string',
+				enum: [ 'image', 'video', 'audio', 'application' ],
+				description: 'Kind of file. Defaults to image.',
+			},
+			perPage: {
+				type: 'integer',
+				minimum: 1,
+				maximum: 20,
+				description: 'Results per page. Defaults to 10.',
+			},
+			page: {
+				type: 'integer',
+				minimum: 1,
+				description: 'Page of results, starting at 1.',
+			},
+		},
+		additionalProperties: false,
+	},
+	output_schema: {
+		type: 'object',
+		properties: {
+			items: {
+				type: 'array',
+				items: {
+					type: 'object',
+					properties: {
+						id: { type: 'integer' },
+						url: { type: 'string' },
+						title: { type: 'string' },
+						alt: { type: 'string' },
+						caption: { type: 'string' },
+						mimeType: { type: 'string' },
+						width: { type: [ 'integer', 'null' ] },
+						height: { type: [ 'integer', 'null' ] },
+						date: { type: 'string' },
+						blockAttributes: {
+							type: 'object',
+							description:
+								'Attributes for a core/image block showing this image. Images only.',
+						},
+					},
+				},
+			},
+			total: {
+				type: [ 'integer', 'null' ],
+				description: 'Matching files across every page, when known.',
+			},
+		},
+		required: [ 'items' ],
+	},
+	meta: {
+		agenticEditor: {
+			untrustedContent: true,
+		},
+		annotations: {
+			readonly: true,
+			destructive: false,
+			idempotent: true,
+		},
+	},
+	callback: async ( input = {} ) => {
+		assertEditorReady();
+
+		const search = optionalString( input.search, 'search' );
+		const mediaType = input.mediaType ?? 'image';
+		if (
+			! [ 'image', 'video', 'audio', 'application' ].includes( mediaType )
+		) {
+			throw new Error(
+				'mediaType must be one of image, video, audio or application.'
+			);
+		}
+		const perPage = input.perPage ?? 10;
+		const page = input.page ?? 1;
+		if ( ! Number.isInteger( perPage ) || perPage < 1 || perPage > 20 ) {
+			throw new Error( 'perPage must be a whole number from 1 to 20.' );
+		}
+		if ( ! Number.isInteger( page ) || page < 1 ) {
+			throw new Error( 'page must be a whole number from 1.' );
+		}
+
+		/** @type {Record<string, unknown>} */
+		const query = {
+			media_type: mediaType,
+			per_page: perPage,
+			page,
+			orderby: 'date',
+			order: 'desc',
+			// Widens the search to alt text and file names; see
+			// includes/media-search.php.
+			agentic_editor_search: 1,
+		};
+		if ( search ) {
+			query.search = search;
+		}
+
+		// A search is always answered fresh, so a file uploaded or generated
+		// since the last identical search is found.
+		const args = [ 'postType', 'attachment', query ];
+		getData()
+			.dispatch( CORE_STORE )
+			?.invalidateResolution?.( 'getEntityRecords', args );
+
+		const records =
+			( await getResolveSelect()( CORE_STORE ).getEntityRecords(
+				...args
+			) ) ?? [];
+		const total = getData()
+			.select( CORE_STORE )
+			?.getEntityRecordsTotalItems?.( ...args );
+
+		return {
+			items: records.map( summarizeAttachment ),
+			total: typeof total === 'number' ? total : null,
+		};
+	},
+};
+
 /** @type {Object} */
 const generateImageAbility = {
 	name: 'editor/generate-image',
 	label: 'Generate Image',
 	description:
-		"Generates a new image from a text description with this site's AI provider and adds it to the Media Library. It does not place the image: pass the returned blockAttributes to editor/insert-block as the attributes of a core/image block, or give the returned id and url to editor/update-block for an existing image block (id, url), cover block (id, url) or media & text block (mediaId, mediaUrl). Use this whenever the user wants a new image; never use an image URL from anywhere else.",
+		"Generates a new image from a text description with this site's AI provider and adds it to the Media Library. It does not place the image: pass the returned blockAttributes to editor/insert-block as the attributes of a core/image block, or give the returned id and url to editor/update-block for an existing image block (id, url), cover block (id, url) or media & text block (mediaId, mediaUrl). Use this only when the user asks for a new or generated image; to use an image already on the site, call editor/search-media instead. Never use an image URL from anywhere else.",
 	category: ABILITY_CATEGORY.slug,
 	input_schema: {
 		type: 'object',
@@ -194,21 +395,16 @@ const generateImageAbility = {
 			);
 		}
 
-		return {
+		const result = {
 			id: image.id,
-			url: image.url,
-			alt: image.alt,
+			url: String( image.url ?? '' ),
+			alt: typeof image.alt === 'string' ? image.alt : '',
 			title: image.title,
 			width: image.width ?? null,
 			height: image.height ?? null,
-			blockAttributes: {
-				id: image.id,
-				url: image.url,
-				alt: image.alt,
-				sizeSlug: 'full',
-				linkDestination: 'none',
-			},
 		};
+
+		return { ...result, blockAttributes: imageBlockAttributes( result ) };
 	},
 };
 
@@ -221,7 +417,8 @@ const generateImageAbility = {
  * @return {string[]} Registered ability names.
  */
 export function registerMediaAbilities() {
-	return readConfig().imageGeneration
-		? registerAbilities( [ generateImageAbility ] )
-		: [];
+	return registerAbilities( [
+		searchMediaAbility,
+		...( readConfig().imageGeneration ? [ generateImageAbility ] : [] ),
+	] );
 }

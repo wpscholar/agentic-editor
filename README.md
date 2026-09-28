@@ -9,7 +9,7 @@ Requires **WordPress 7.0+** (client-side Abilities API and AI Client) and **PHP 
 On block editor screens the plugin:
 
 1. Registers a `block-editor` ability category
-2. Registers twenty editor abilities (inspect / query / mutate the live editor), plus `editor/generate-image` when the site's AI connector can generate images
+2. Registers twenty-one editor abilities (inspect / query / mutate the live editor), plus `editor/generate-image` when the site's AI connector can generate images
 3. Bridges each ability to `document.modelContext.registerTool()`, installing the [WebMCP polyfill](https://www.npmjs.com/package/@mcp-b/webmcp-polyfill) when the browser has no native support
 4. Adds an **AI Chat** sidebar that can call those tools
 
@@ -35,6 +35,7 @@ On block editor screens the plugin:
 | `editor/get-pattern-categories` | `editor_get-pattern-categories` | Pattern categories, registered and user-created |
 | `editor/insert-pattern` | `editor_insert-pattern` | Insert a pattern at a location |
 | `editor/create-pattern` | `editor_create-pattern` | Save blocks as a new pattern on this site |
+| `editor/search-media` | `editor_search-media` | Find files already in the Media Library by title, alt text, caption or file name |
 | `editor/generate-image` | `editor_generate-image` | Generate an image with the site's AI connector and add it to the Media Library (only when the connector supports image generation) |
 
 Ability names keep the `namespace/name` form. WebMCP tool names replace `/` with `_` (some agents reject `/` in tool names).
@@ -68,8 +69,11 @@ Behavior worth knowing when calling these:
 - Creating anything requires an account that may create `wp_block` posts; that is checked up front so the failure reads as a permission problem rather than a REST error.
 - Pattern data is fetched over REST, so the first pattern call on a page load waits on that request. Later calls are served from the store.
 
-### Generated images
+### Media
 
+- `editor/search-media` finds files already in the Media Library, newest first; it looks for images unless `mediaType` says otherwise. Core's attachment search only looks at the title, caption and description, so the ability sends an `agentic_editor_search` flag, and `includes/media-search.php` widens that one query to alt text and file names too. A photo titled `IMG_1234` with the alt text "Lighthouse at dusk" is found by "lighthouse". Every search word must match somewhere. Other media queries on the site are unaffected.
+- Each image result carries the same `blockAttributes` as a generated image, so placing a library image and placing a generated one are the same next step. Titles, alt text and captions are written by people, so results are marked as untrusted content.
+- Searching needs no approval and is always available. Generating is only for a new image: the tool descriptions and the system instruction steer "an image from the media library" to search, and tell the model to report an empty search rather than generate unasked.
 - `editor/generate-image` is registered only when a connector on the site can generate images and the user may upload files. PHP asks the AI Client (`is_supported_for_image_generation()`, which makes no request to a provider) and passes the answer to the page. On a site without an image model the tool is simply not there, so the model cannot reach for it and fail.
 - The AI Client runs only in PHP, so the ability calls `POST /wp-json/agentic-editor/v1/image`. The endpoint generates one image, sideloads it into the Media Library (attached to the post being edited, when the user may edit it), sets its alt text, and records the prompt in the attachment's description and in `_agentic_editor_image_prompt` meta. It returns a local attachment, never a provider's URL.
 - The ability does not place the image. It returns `blockAttributes` for a `core/image` block (`id`, `url`, `alt`, `sizeSlug`, `linkDestination`), which the model passes to `editor/insert-block`, or the `id` and `url` it passes to `editor/update-block` for an existing image, cover or media & text block. Placement is therefore an ordinary editor change that undo reverts; the attachment is not.

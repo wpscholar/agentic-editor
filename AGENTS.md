@@ -31,7 +31,8 @@ Two goals:
 | `js/abilities.js` | Aggregates the ability modules into one `registerEditorAbilities()` |
 | `js/abilities/block-editor.js` | Block tree, insert/move/update/remove, transforms, selection, undo/redo |
 | `js/abilities/patterns.js` | Pattern and synced-pattern abilities |
-| `js/abilities/media.js` | `editor/generate-image`, registered only when PHP says the connector can generate images |
+| `js/abilities/media.js` | `editor/search-media`, and `editor/generate-image`, which is registered only when PHP says the connector can generate images |
+| `includes/media-search.php` | Widens the flagged `editor/search-media` attachment query to alt text and file names |
 | `js/abilities/shared.js` | Category, `registerAbilities`, store access, lock and nesting checks |
 | `js/webmcp-bridge.js` | Maps abilities to WebMCP tools; feature-detects `document.modelContext` |
 | `js/webmcp-polyfill.js` | `getModelContext()`: finds `document.modelContext` (or the deprecated `navigator` alias); installs nothing |
@@ -74,7 +75,7 @@ Two goals:
   - `approval: '<why>'` for anything editor undo cannot take back. The chat asks the user before each call and shows this text
   - `timeoutMs: <ms>` for anything slower than the chat's 30-second tool limit (image generation). The bridge hands it to local consumers only, and the transport caps it at `MAX_TOOL_TIMEOUT_MS`
 - An ability that depends on what the site's connectors can do (`editor/generate-image`) is registered only when PHP reports support through its module's `script_module_data_*` filter. A tool the model can see but never use invites it to fail, or to improvise around it
-- Media must come from the Media Library. Never let an ability, or the system instruction, send the model to a URL it found or made up; generated files are sideloaded and referenced by attachment `id` and local `url`
+- Media must come from the Media Library: search it with `editor/search-media` for an existing file, and generate only when the user asks for something new. Never let an ability, or the system instruction, send the model to a URL it found or made up; generated files are sideloaded and referenced by attachment `id` and local `url`
 - Every `type: 'array'` in an **input** schema needs `items`, at every depth. Gemini rejects a function declaration without it and fails the whole chat request, not just that one tool. Output schemas are never sent to a provider, so they are free to be loose
 - Callbacks may assume they run in the block editor; guard with the `core/block-editor` store and throw clear errors otherwise
 - Use `window.wp.data` and `window.wp.blocks` (classic globals). Only `@wordpress/abilities` is imported as a script module

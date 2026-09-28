@@ -27,6 +27,22 @@ export function getData() {
 }
 
 /**
+ * Anything backed by REST (patterns, media, terms) has to be awaited rather
+ * than read: a plain select returns nothing until the resolver has finished.
+ *
+ * @return {(storeName: string) => Object} `wp.data.resolveSelect`.
+ */
+export function getResolveSelect() {
+	const { resolveSelect } = getData();
+	if ( typeof resolveSelect !== 'function' ) {
+		throw new Error(
+			'WordPress data resolvers are not available, so site content cannot be loaded.'
+		);
+	}
+	return resolveSelect;
+}
+
+/**
  * @return {Object} `wp.blocks`, checked to have `createBlock` and `getBlockType`.
  */
 export function getBlocksApi() {

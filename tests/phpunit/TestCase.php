@@ -87,6 +87,7 @@ abstract class TestCase extends PHPUnitTestCase {
 
 		require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/chat-rest.php';
 		require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/image-rest.php';
+		require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/media-search.php';
 	}
 
 	protected function tearDown(): void {

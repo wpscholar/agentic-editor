@@ -22,6 +22,7 @@ const EXPECTED_TOOLS = [
 	'editor_get-pattern-categories',
 	'editor_insert-pattern',
 	'editor_create-pattern',
+	'editor_search-media',
 ];
 
 /**
