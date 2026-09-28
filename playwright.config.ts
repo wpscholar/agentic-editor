@@ -28,6 +28,9 @@ export default defineConfig( {
 	workers: 4,
 	forbidOnly: !! process.env.CI,
 	retries: process.env.CI ? 1 : 0,
+	// GitHub's runners are 4–5 times slower than a laptop here: the median
+	// test takes ~14s there, so the default 30s leaves no headroom.
+	timeout: process.env.CI ? 60_000 : 30_000,
 	// CI annotates failures on the pull request and keeps an HTML report as
 	// an artifact; locally, the list is enough.
 	reporter: process.env.CI

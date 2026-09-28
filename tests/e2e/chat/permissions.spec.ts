@@ -60,12 +60,14 @@ async function logIn( browser: Browser, baseURL: string, user: TestUser ) {
 		},
 	] );
 
+	// The tests only need the auth cookie, so log in straight to a static file
+	// rather than the dashboard, which is slow to build on CI runners.
 	const page = await context.newPage();
-	await page.goto( '/wp-login.php' );
+	await page.goto( '/wp-login.php?redirect_to=%2Freadme.html' );
 	await page.locator( '#user_login' ).fill( user.username );
 	await page.locator( '#user_pass' ).fill( user.password );
 	await Promise.all( [
-		page.waitForURL( /\/wp-admin\// ),
+		page.waitForURL( /\/readme\.html$/ ),
 		page.locator( '#wp-submit' ).click(),
 	] );
 
