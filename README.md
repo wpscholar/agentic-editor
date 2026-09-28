@@ -103,7 +103,7 @@ Gemini is the exception: it requires the thought signature it issued with a func
 
 ### Where the tools come from
 
-The chat offers whatever the page registered with WebMCP — nothing is hard-coded. In the block editor that is the twenty abilities above, so the assistant can read the block tree and edit the post. Tools registered by other plugins on the same page are picked up automatically.
+The chat offers whatever the page registered with WebMCP — nothing is hard-coded. In the block editor that is the abilities above, so the assistant can read the block tree and edit the post. Tools registered by other plugins on the same page are picked up automatically.
 
 Tools this plugin registered are called through their own executor. Anything else goes through `document.modelContext.executeTool()`, which the polyfill always provides and native Chrome provides as an optional extension.
 
@@ -160,12 +160,15 @@ agentic-editor.php        # Plugin bootstrap; enqueues editor script modules
 includes/
   chat-rest.php            # /agentic-editor/v1/chat — one model turn per request
   chat-assets.php          # Script module registration + per-screen config
+  image-rest.php           # /agentic-editor/v1/image — generate an image into the Media Library
+  media-search.php         # Widens editor/search-media's query to alt text and file names
 js/
   index.js                 # Entry: register abilities + bridge to WebMCP
   abilities.js             # Aggregates the ability modules below
   abilities/
     block-editor.js        # Block tree, edits, transforms, selection, undo/redo
     patterns.js            # Pattern and synced-pattern abilities
+    media.js               # Media Library search and image generation
     shared.js              # Category, registration, store access, lock checks
   webmcp-bridge.js         # Abilities → document.modelContext.registerTool
   webmcp-polyfill.js       # getModelContext(): finds the model context; installs nothing
@@ -191,9 +194,10 @@ vite.config.ts
 bin/build-zip.sh           # Builds a distributable plugin zip
 bin/vendor-webmcp-polyfill.sh
 bin/blueprints/            # Playground blueprints (the Google connector for start:ai)
+bin/start-ai.mjs           # npm run start:ai: Playground with the Google connector and key
 tests/
   e2e/                     # Playwright against Playground
-  phpunit/                 # PHPUnit unit tests for the chat endpoint
+  phpunit/                 # PHPUnit unit tests for the chat and image endpoints and media search
 ```
 
 Two layers with different build stories. Everything under `js/` is hand-written native ESM resolved through WordPress import maps (`@wordpress/abilities`, `@agentic-editor/*`) with no build step. The chat panel under `src/` is compiled, but keeps `@agentic-editor/webmcp-tools` and `@agentic-editor/chat-config` as import-map externals rather than bundling them — the tool layer has to be the *same* module instance the ability bridge registered into, or the chat would see an empty tool registry.
@@ -201,6 +205,8 @@ Two layers with different build stories. Everything under `js/` is hand-written 
 The polyfill is the one exception: its ESM build imports `@cfworker/json-schema` as a bare specifier, which the import map has no entry for, so the self-contained IIFE build is enqueued as a classic script instead. It installs itself on load and steps aside when the browser has native WebMCP. Classic scripts run before deferred modules, so `document.modelContext` exists by the time any module looks for it. Run `npm run vendor` to refresh the copy after bumping the dependency.
 
 ## Local development (WP Playground)
+
+Requires **Node 24.18+** and **npm 11.16+**, the minimum the Playground CLI supports. `.nvmrc` pins the version CI uses, and `npm install` / `npm ci` refuse to run on anything older.
 
 ```bash
 npm install
@@ -237,7 +243,7 @@ For local dev or CI without clicking through that screen, every connector also r
 GOOGLE_API_KEY=your-key-here npm run start:ai
 ```
 
-`npm run start:ai` installs and activates the Google connector plugin via `bin/blueprints/install-google-connector.json`, then passes `GOOGLE_API_KEY` through as a PHP constant (`--define`), which `wp_get_connector( 'google' )` checks ahead of the database. The key never touches the options table, a form field, or this repo. Anthropic and OpenAI follow the same convention: `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` respectively, once their connector plugins are installed.
+`npm run start:ai` installs and activates the Google connector plugin via `bin/blueprints/install-google-connector.json`, then passes `GOOGLE_API_KEY` through as a PHP constant, defined by a private temporary blueprint rather than on the command line where `ps` would show it. That constant is what `wp_get_connector( 'google' )` checks ahead of the database. The key never touches the options table, a form field, or this repo. Anthropic and OpenAI follow the same convention: `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` respectively, once their connector plugins are installed.
 
 ## Testing WebMCP
 
@@ -271,7 +277,8 @@ Builds the panel, then writes `dist/agentic-editor.zip` containing only plugin r
 - [Introducing the Connectors API in WordPress 7.0](https://make.wordpress.org/core/2026/03/18/introducing-the-connectors-api-in-wordpress-7-0/)
 - [WebMCP (Chrome)](https://developer.chrome.com/docs/ai/webmcp)
 - [WebMCP Imperative API](https://developer.chrome.com/docs/ai/webmcp/imperative-api)
-- [`@mcp-b/webmcp-polyfill`](https://www.npmjs.com/package/@mcp-b/webmcp-polyfill)
-- [shadcn/ui](https://ui.shadcn.com) — the chat components
+- [`@wordpress/abilities` package reference](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-abilities/)
+- [`@mcp-b/webmcp-polyfill`](https://www.npmjs.com/package/@mcp-b/webmcp-polyfill) ([reference](https://docs.mcp-b.ai/packages/webmcp-polyfill/reference))
+- [shadcn/ui](https://ui.shadcn.com) — the chat components ([Message](https://ui.shadcn.com/docs/components/message))
 - [AI SDK: Transport](https://ai-sdk.dev/docs/ai-sdk-ui/transport) — the `ChatTransport` contract
 - [React 19 punted beyond WordPress 7.1](https://make.wordpress.org/core/2026/07/24/react-19-punted-beyond-wordpress-7-1-experiment-in-gutenberg/) — why React is not bundled
