@@ -16,6 +16,7 @@ require_once dirname( __DIR__, 2 ) . '/vendor/autoload.php';
 define( 'ABSPATH', sys_get_temp_dir() . '/agentic-editor-tests/' );
 define( 'MB_IN_BYTES', 1024 * 1024 );
 define( 'MINUTE_IN_SECONDS', 60 );
+define( 'HOUR_IN_SECONDS', 3600 );
 
 define( 'AGENTIC_EDITOR_VERSION', '0.0.0' );
 define( 'AGENTIC_EDITOR_PLUGIN_FILE', dirname( __DIR__, 2 ) . '/agentic-editor.php' );

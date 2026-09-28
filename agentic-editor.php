@@ -8,6 +8,7 @@
  * Author:            Micah Wood
  * License:           GPL-2.0-or-later
  * Text Domain:       agentic-editor
+ * Update URI:        https://github.com/wpscholar/agentic-editor
  *
  * @package AgenticEditor
  */
@@ -37,6 +38,7 @@ require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/chat-rest.php';
 require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/image-rest.php';
 require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/media-search.php';
 require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/chat-assets.php';
+require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/updates.php';
 
 /**
  * Whether the current screen is a post or site editor.

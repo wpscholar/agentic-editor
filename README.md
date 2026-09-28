@@ -162,6 +162,7 @@ includes/
   chat-assets.php          # Script module registration + per-screen config
   image-rest.php           # /agentic-editor/v1/image — generate an image into the Media Library
   media-search.php         # Widens editor/search-media's query to alt text and file names
+  updates.php              # Updates from GitHub releases (the Update URI header)
 js/
   index.js                 # Entry: register abilities + bridge to WebMCP
   abilities.js             # Aggregates the ability modules below
@@ -268,6 +269,16 @@ npm run zip
 ```
 
 Builds the panel, then writes `dist/agentic-editor.zip` containing only plugin runtime files (`agentic-editor.php`, `includes/`, `js/`, `css/`, `build/`), with source maps stripped. `build/`, `dist/`, and `*.zip` are gitignored.
+
+## Releases and updates
+
+The plugin is not on WordPress.org; installed sites update from this repository's GitHub releases.
+
+To release, bump `Version:` in the plugin header and `AGENTIC_EDITOR_VERSION` together, then publish a GitHub release tagged with that version: `1.2.0` or `v1.2.0`, and nothing after the number, since the updater skips any other tag. The release workflow runs the full test suite, checks that the tag matches both, and attaches `agentic-editor.zip`.
+
+The plugin header's `Update URI` points at the repository, so WordPress asks `includes/updates.php` rather than WordPress.org. It reads the latest release from the GitHub API and offers it once `agentic-editor.zip` is attached, so a release shows up on sites only after its tests pass. Updates then appear under **Dashboard → Updates** and **Plugins** like any other, auto-updates included, and **View details** shows the release notes. Drafts and pre-releases are never offered.
+
+The answer is cached for six hours (one after a failed lookup), because GitHub allows 60 unauthenticated API requests an hour per IP address. **Check again** on **Dashboard → Updates** skips the cache.
 
 ## References
 

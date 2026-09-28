@@ -32,6 +32,7 @@ Two goals:
 | `src/components/ui/*` | shadcn output. Regenerate with the CLI; never hand-edit |
 | `src/lib/wp.ts` | Typed `window.wp`, for the editor entry only |
 | `bin/start-ai.mjs` | Passes `GOOGLE_API_KEY` through a private temporary blueprint, never on the command line |
+| `includes/updates.php` | Updates from GitHub releases. The repository (`AGENTIC_EDITOR_REPOSITORY` and the `Update URI` header) is built into every installed copy, so never rename it or the `agentic-editor.zip` asset without a plan for sites still on the old name |
 | `tests/phpunit/` | No WordPress: Brain Monkey for WordPress functions, the real AI Client DTOs |
 
 ## Conventions
