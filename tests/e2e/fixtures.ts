@@ -32,8 +32,11 @@ type Fixtures = {
 };
 
 export const test = base.extend< Fixtures >( {
-	editor: async ( { page }, use ) => {
-		await openEditor( page );
+	editor: async ( { page }, use, testInfo ) => {
+		// Half the test's budget, so a slow load fails here with a clear
+		// error and still leaves the test time to run. It scales with the
+		// longer CI timeout, where the editor can take over 15s to load.
+		await openEditor( page, testInfo.timeout / 2 );
 		await use( page );
 	},
 
