@@ -66,6 +66,7 @@ export default [
 				'@agentic-editor/abilities/shared',
 				'@agentic-editor/abilities/block-editor',
 				'@agentic-editor/abilities/patterns',
+				'@agentic-editor/abilities/media',
 				'@wordpress/abilities',
 			],
 		},

@@ -10,6 +10,7 @@
 
 import { registerBlockEditorAbilities } from '@agentic-editor/abilities/block-editor';
 import { registerPatternAbilities } from '@agentic-editor/abilities/patterns';
+import { registerMediaAbilities } from '@agentic-editor/abilities/media';
 
 /**
  * Register the block-editor category and its abilities.
@@ -17,5 +18,9 @@ import { registerPatternAbilities } from '@agentic-editor/abilities/patterns';
  * @return {string[]} Registered ability names.
  */
 export function registerEditorAbilities() {
-	return [ ...registerBlockEditorAbilities(), ...registerPatternAbilities() ];
+	return [
+		...registerBlockEditorAbilities(),
+		...registerPatternAbilities(),
+		...registerMediaAbilities(),
+	];
 }

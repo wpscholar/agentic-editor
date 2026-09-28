@@ -212,6 +212,27 @@ describe( 'webmcp-bridge', () => {
 		);
 	} );
 
+	it( 'hands a tool timeout to local consumers only when it is a positive number', async () => {
+		const tool = await bridgeOne( {
+			name: 'x/y',
+			meta: { agenticEditor: { timeoutMs: 120000 } },
+		} );
+
+		expect( tool.timeoutMs ).toBeUndefined();
+		expect( mockedRemember ).toHaveBeenCalledWith(
+			expect.objectContaining( { name: 'x_y', timeoutMs: 120000 } )
+		);
+
+		mockedRemember.mockClear();
+		await bridgeOne( {
+			name: 'x/z',
+			meta: { agenticEditor: { timeoutMs: -1 } },
+		} );
+		expect( mockedRemember.mock.calls[ 0 ][ 0 ] ).not.toHaveProperty(
+			'timeoutMs'
+		);
+	} );
+
 	describe( 'execute', () => {
 		it( 'returns an object result as text and structured content', async () => {
 			mockedExecuteAbility.mockResolvedValue( { count: 2 } );

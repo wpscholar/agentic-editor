@@ -25,6 +25,31 @@ const EXPECTED_TOOLS = [
 ];
 
 /**
+ * `editor_generate-image` is registered only when the site's connector can
+ * generate images, which a site started with `npm run start:ai` can.
+ */
+const IMAGE_TOOL = 'editor_generate-image';
+
+/**
+ * Every tool this site should list, sorted.
+ */
+async function expectedToolNames( editor: Page ): Promise< string[] > {
+	const imageGeneration = await editor.evaluate( () => {
+		const element = document.getElementById(
+			'wp-script-module-data-@agentic-editor/abilities/media'
+		);
+		return (
+			JSON.parse( element?.textContent || '{}' ).imageGeneration === true
+		);
+	} );
+
+	return [
+		...EXPECTED_TOOLS,
+		...( imageGeneration ? [ IMAGE_TOOL ] : [] ),
+	].sort();
+}
+
+/**
  * Names of the tools WebMCP lists on the page, sorted.
  */
 async function listedToolNames( editor: Page ): Promise< string[] > {
@@ -45,12 +70,11 @@ test( 'registers exactly the editor abilities as WebMCP tools', async ( {
 	expect( status.webmcp.supported ).toBe( true );
 	expect( status.webmcp.errors ).toEqual( [] );
 	expect( status.webmcp.skipped ).toEqual( [] );
-	expect( status.webmcp.registered ).toHaveLength( EXPECTED_TOOLS.length );
+	const expected = await expectedToolNames( editor );
+	expect( status.webmcp.registered ).toHaveLength( expected.length );
 	expect( status.webmcp.registered ).toEqual( status.abilityNames );
 
-	expect( await listedToolNames( editor ) ).toEqual(
-		[ ...EXPECTED_TOOLS ].sort()
-	);
+	expect( await listedToolNames( editor ) ).toEqual( expected );
 } );
 
 test( 'tools stay registered after load', async ( { editor } ) => {
@@ -59,7 +83,7 @@ test( 'tools stay registered after load', async ( { editor } ) => {
 	await editor.waitForTimeout( 2_000 );
 
 	expect( await listedToolNames( editor ) ).toEqual(
-		[ ...EXPECTED_TOOLS ].sort()
+		await expectedToolNames( editor )
 	);
 } );
 
@@ -78,11 +102,13 @@ test( 'bootstrapping again changes nothing', async ( { editor } ) => {
 		};
 	} );
 
-	expect( rerun.abilityNames ).toHaveLength( EXPECTED_TOOLS.length );
+	expect( rerun.abilityNames ).toHaveLength(
+		( await expectedToolNames( editor ) ).length
+	);
 	expect( rerun.result.errors ).toEqual( [] );
 	expect( rerun.result.registered ).toEqual( rerun.abilityNames );
 	expect( await listedToolNames( editor ) ).toEqual(
-		[ ...EXPECTED_TOOLS ].sort()
+		await expectedToolNames( editor )
 	);
 } );
 

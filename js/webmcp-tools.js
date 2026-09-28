@@ -32,6 +32,7 @@ let listeningForToolChange = false;
  * @param {Object}                             [descriptor.inputSchema]
  * @param {Object}                             [descriptor.annotations]
  * @param {string}                             [descriptor.approval]    Why a person must approve each call.
+ * @param {number}                             [descriptor.timeoutMs]   How long a consumer should wait for a call.
  * @param {(input: Object) => Promise<Object>} descriptor.execute       Executor.
  */
 export function rememberLocalTool( descriptor ) {
@@ -103,7 +104,7 @@ function parseInputSchema( inputSchema ) {
 /**
  * @param {Object} tool
  * @param {string} source
- * @return {{ name: string, description: string, inputSchema: Object|undefined, annotations: Object|undefined, source: string, approval?: string }}
+ * @return {{ name: string, description: string, inputSchema: Object|undefined, annotations: Object|undefined, source: string, approval?: string, timeoutMs?: number }}
  */
 function normalizeTool( tool, source ) {
 	const normalized = {
@@ -118,6 +119,16 @@ function normalizeTool( tool, source ) {
 	// another script is never taken at its word.
 	if ( source === 'local' && typeof tool.approval === 'string' ) {
 		normalized.approval = tool.approval;
+	}
+
+	// Likewise only this page's own tools may ask to be waited on for longer.
+	if (
+		source === 'local' &&
+		typeof tool.timeoutMs === 'number' &&
+		Number.isFinite( tool.timeoutMs ) &&
+		tool.timeoutMs > 0
+	) {
+		normalized.timeoutMs = tool.timeoutMs;
 	}
 
 	return normalized;

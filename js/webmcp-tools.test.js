@@ -88,6 +88,30 @@ describe( 'webmcp-tools', () => {
 			expect( foreign.approval ).toBeUndefined();
 		} );
 
+		it( "keeps a timeout only for this page's own tools", async () => {
+			useModelContext( {
+				getTools: async () => [
+					{ name: 'foreign', timeoutMs: 999999 },
+				],
+			} );
+			const tools = await loadTools();
+			tools.rememberLocalTool( {
+				name: 'editor_generate-image',
+				timeoutMs: 120000,
+				execute: async () => ( {} ),
+			} );
+
+			const listed = await tools.listTools();
+
+			expect(
+				listed.find( ( tool ) => tool.name === 'editor_generate-image' )
+					.timeoutMs
+			).toBe( 120000 );
+			expect(
+				listed.find( ( tool ) => tool.name === 'foreign' ).timeoutMs
+			).toBeUndefined();
+		} );
+
 		it( 'drops an input schema that is not valid JSON', async () => {
 			useModelContext( {
 				getTools: async () => [

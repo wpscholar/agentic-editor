@@ -209,3 +209,71 @@ test.describe( 'chat REST limits', () => {
 		} );
 	} );
 } );
+
+test.describe( 'image REST', () => {
+	// Nothing here may reach a provider, so the first case only runs on a
+	// site whose connectors cannot generate images.
+	test( 'says when no connector can generate images', async ( {
+		editor,
+	} ) => {
+		const supported = await editor.evaluate(
+			async () =>
+				(
+					await ( window as any ).wp.apiFetch( {
+						path: '/agentic-editor/v1/chat/status',
+					} )
+				).imageGeneration
+		);
+		// eslint-disable-next-line playwright/no-skipped-test -- Generating would bill the site's connector.
+		test.skip(
+			supported,
+			'This site has a connector that can generate images.'
+		);
+
+		const result = await editor.evaluate( async () => {
+			const wp = ( window as any ).wp;
+			const status = await wp.apiFetch( {
+				path: '/agentic-editor/v1/chat/status',
+			} );
+			try {
+				await wp.apiFetch( {
+					path: '/agentic-editor/v1/image',
+					method: 'POST',
+					data: { prompt: 'A lighthouse at dusk' },
+				} );
+				return { status, error: null };
+			} catch ( error: any ) {
+				return {
+					status,
+					error: { code: error?.code, status: error?.data?.status },
+				};
+			}
+		} );
+
+		expect( result.status.imageGeneration ).toBe( false );
+		expect( result.error ).toEqual( {
+			code: 'agentic_editor_image_unsupported',
+			status: 501,
+		} );
+	} );
+
+	test( 'rejects a request without a prompt', async ( { editor } ) => {
+		const error = await editor.evaluate( async () => {
+			try {
+				await ( window as any ).wp.apiFetch( {
+					path: '/agentic-editor/v1/image',
+					method: 'POST',
+					data: {},
+				} );
+				return null;
+			} catch ( caught: any ) {
+				return { code: caught?.code, status: caught?.data?.status };
+			}
+		} );
+
+		expect( error ).toEqual( {
+			code: 'rest_missing_callback_param',
+			status: 400,
+		} );
+	} );
+} );

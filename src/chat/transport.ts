@@ -76,6 +76,11 @@ type Emit = ( chunk: UIMessageChunk< ChatMetadata > ) => void;
  */
 export const TOOL_TIMEOUT_MS = 30_000;
 
+/**
+ * The longest a tool may ask to be waited on, however long it says it needs.
+ */
+export const MAX_TOOL_TIMEOUT_MS = 300_000;
+
 let idCounter = 0;
 
 function nextId( prefix: string ): string {
@@ -143,7 +148,9 @@ function notRunTurn(
 }
 
 /**
- * Run a tool call, but stop waiting on Stop or after TOOL_TIMEOUT_MS.
+ * Run a tool call, but stop waiting on Stop or after its timeout: the tool's
+ * own `timeoutMs` when it set one, capped at MAX_TOOL_TIMEOUT_MS, and
+ * TOOL_TIMEOUT_MS otherwise.
  *
  * WebMCP has no way to cancel a call in progress, so a call abandoned here may
  * still finish in the background; the loop just no longer waits for it.
@@ -151,18 +158,20 @@ function notRunTurn(
 async function callToolWithLimits(
 	name: string,
 	input: Record< string, unknown >,
-	abortSignal: AbortSignal | undefined
+	abortSignal: AbortSignal | undefined,
+	timeoutMs: number = TOOL_TIMEOUT_MS
 ): Promise< WebMcpToolResult > {
+	const limit = Math.min( timeoutMs, MAX_TOOL_TIMEOUT_MS );
 	let timer: ReturnType< typeof setTimeout > | undefined;
 	let onAbort: ( () => void ) | undefined;
 
 	const timeout = new Promise< WebMcpToolResult >( ( resolve ) => {
 		timer = setTimeout( () => {
 			const text = `${ name } did not finish within ${
-				TOOL_TIMEOUT_MS / 1000
+				limit / 1000
 			} seconds, so its result is unknown. Check the current state before retrying.`;
 			resolve( { isError: true, value: { error: text }, text } );
-		}, TOOL_TIMEOUT_MS );
+		}, limit );
 	} );
 
 	const aborted = new Promise< never >( ( _resolve, reject ) => {
@@ -565,7 +574,8 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 				result = await callToolWithLimits(
 					call.name,
 					input,
-					abortSignal
+					abortSignal,
+					toolsByName.get( call.name )?.timeoutMs
 				);
 			} catch ( error ) {
 				if ( isAbort( error ) ) {

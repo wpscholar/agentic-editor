@@ -9,7 +9,7 @@ Requires **WordPress 7.0+** (client-side Abilities API and AI Client) and **PHP 
 On block editor screens the plugin:
 
 1. Registers a `block-editor` ability category
-2. Registers twenty editor abilities (inspect / query / mutate the live editor)
+2. Registers twenty editor abilities (inspect / query / mutate the live editor), plus `editor/generate-image` when the site's AI connector can generate images
 3. Bridges each ability to `document.modelContext.registerTool()`, installing the [WebMCP polyfill](https://www.npmjs.com/package/@mcp-b/webmcp-polyfill) when the browser has no native support
 4. Adds an **AI Chat** sidebar that can call those tools
 
@@ -35,6 +35,7 @@ On block editor screens the plugin:
 | `editor/get-pattern-categories` | `editor_get-pattern-categories` | Pattern categories, registered and user-created |
 | `editor/insert-pattern` | `editor_insert-pattern` | Insert a pattern at a location |
 | `editor/create-pattern` | `editor_create-pattern` | Save blocks as a new pattern on this site |
+| `editor/generate-image` | `editor_generate-image` | Generate an image with the site's AI connector and add it to the Media Library (only when the connector supports image generation) |
 
 Ability names keep the `namespace/name` form. WebMCP tool names replace `/` with `_` (some agents reject `/` in tool names).
 
@@ -66,6 +67,15 @@ Behavior worth knowing when calling these:
 - `replaceSource: true` swaps the source blocks for a reference to the new synced pattern, which is the editor's own "Create pattern" behavior. It needs `syncStatus: 'synced'` and blocks that sit next to each other under one parent.
 - Creating anything requires an account that may create `wp_block` posts; that is checked up front so the failure reads as a permission problem rather than a REST error.
 - Pattern data is fetched over REST, so the first pattern call on a page load waits on that request. Later calls are served from the store.
+
+### Generated images
+
+- `editor/generate-image` is registered only when a connector on the site can generate images and the user may upload files. PHP asks the AI Client (`is_supported_for_image_generation()`, which makes no request to a provider) and passes the answer to the page. On a site without an image model the tool is simply not there, so the model cannot reach for it and fail.
+- The AI Client runs only in PHP, so the ability calls `POST /wp-json/agentic-editor/v1/image`. The endpoint generates one image, sideloads it into the Media Library (attached to the post being edited, when the user may edit it), sets its alt text, and records the prompt in the attachment's description and in `_agentic_editor_image_prompt` meta. It returns a local attachment, never a provider's URL.
+- The ability does not place the image. It returns `blockAttributes` for a `core/image` block (`id`, `url`, `alt`, `sizeSlug`, `linkDestination`), which the model passes to `editor/insert-block`, or the `id` and `url` it passes to `editor/update-block` for an existing image, cover or media & text block. Placement is therefore an ordinary editor change that undo reverts; the attachment is not.
+- `orientation` is `landscape` (the default), `portrait` or `square`. Which model draws the image is up to the connectors; `agentic_editor_image_model_preference` can name preferred models.
+- Generation is billed and the attachment outlives undo, so the chat asks for approval before each call. It also waits up to three minutes for the result rather than the usual thirty seconds.
+- The system instruction tells the model never to use an image URL it found or made up, so on a site without image generation it says so instead of hot-linking something.
 
 ### Synced patterns in the tree
 
@@ -120,7 +130,7 @@ createRoot( document.getElementById( 'my-chat' )! ).render(
 );
 ```
 
-Tool calls run without asking, since editor undo reverts them, except for three kinds that wait for **Approve** or **Deny** in the chat: calls to tools another script put on the page, calls that cannot be undone (`editor/create-pattern`, which publishes straight away), and calls whose arguments carry HTML that could run script, such as a `core/html` block, a `<script>` tag, an `on…=` handler or a `javascript:` URL.
+Tool calls run without asking, since editor undo reverts them, except for three kinds that wait for **Approve** or **Deny** in the chat: calls to tools another script put on the page, calls that cannot be undone (`editor/create-pattern`, which publishes straight away, and `editor/generate-image`, which is billed and adds to the Media Library), and calls whose arguments carry HTML that could run script, such as a `core/html` block, a `<script>` tag, an `on…=` handler or a `javascript:` URL.
 
 `getContext` is read on every send. Its `screen` and `notes` are attached to the user's latest message as page context, not to the system instruction, since they can quote content other people wrote.
 
@@ -132,9 +142,10 @@ In the editor, the paperclip next to **Send** attaches a block. It attaches the 
 | --- | --- |
 | `agentic_editor_chat_capability` | Capability required to use the chat. Defaults to `edit_posts` |
 | `agentic_editor_chat_model_preference` | Preferred models, best first |
+| `agentic_editor_image_model_preference` | Preferred image models for `editor/generate-image`, best first. Empty by default: any image model the connectors offer |
 | `agentic_editor_chat_system_instruction` | The full system instruction |
 | `agentic_editor_chat_max_tool_rounds` | Tool rounds per message, enforced by the browser and the endpoint. Defaults to `25` |
-| `agentic_editor_chat_limits` | Per-request limits: `max_body_bytes` (1 MB), `max_messages` (500), `max_tools` (128), `max_context_chars` (2000), `max_attachment_chars` for the attached block's JSON (8000; a larger block is named for the assistant to read with a tool) and `requests_per_minute` per user (60). `0` turns a limit off |
+| `agentic_editor_chat_limits` | Per-request limits: `max_body_bytes` (1 MB), `max_messages` (500), `max_tools` (128), `max_context_chars` (2000), `max_attachment_chars` for the attached block's JSON (8000; a larger block is named for the assistant to read with a tool) and `requests_per_minute` per user (60, shared with image generation). `0` turns a limit off |
 
 The endpoint runs prompts against the site's connector, and the conversation, tool declarations and page context all come from the browser. Anyone with the chat capability can therefore spend the site's AI credit on prompts of their choosing, within the limits above. It is gated on a capability rather than on being logged in, and the default, `edit_posts`, includes Contributors. Narrow `agentic_editor_chat_capability` if that is too broad for your site.
 

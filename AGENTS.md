@@ -25,11 +25,13 @@ Two goals:
 | --- | --- |
 | `agentic-editor.php` | Plugin header, includes, `enqueue_block_editor_assets` |
 | `includes/chat-rest.php` | `/agentic-editor/v1/chat` — one AI Client turn per request |
+| `includes/image-rest.php` | `/agentic-editor/v1/image` — generate one image, sideload it into the Media Library; `agentic_editor_image_is_available()` |
 | `includes/chat-assets.php` | Script module registration, polyfill script, per-screen config |
 | `js/index.js` | Bootstrap: abilities → WebMCP bridge; sets `window.agenticEditorAbilities` |
 | `js/abilities.js` | Aggregates the ability modules into one `registerEditorAbilities()` |
 | `js/abilities/block-editor.js` | Block tree, insert/move/update/remove, transforms, selection, undo/redo |
 | `js/abilities/patterns.js` | Pattern and synced-pattern abilities |
+| `js/abilities/media.js` | `editor/generate-image`, registered only when PHP says the connector can generate images |
 | `js/abilities/shared.js` | Category, `registerAbilities`, store access, lock and nesting checks |
 | `js/webmcp-bridge.js` | Maps abilities to WebMCP tools; feature-detects `document.modelContext` |
 | `js/webmcp-polyfill.js` | `getModelContext()`: finds `document.modelContext` (or the deprecated `navigator` alias); installs nothing |
@@ -70,6 +72,9 @@ Two goals:
 - Plugin-specific hints live under `meta.agenticEditor`, never in `meta.annotations`:
   - `untrustedContent: true` for anything returning content people wrote (blocks, patterns, terms). The bridge maps it to WebMCP's `untrustedContentHint`
   - `approval: '<why>'` for anything editor undo cannot take back. The chat asks the user before each call and shows this text
+  - `timeoutMs: <ms>` for anything slower than the chat's 30-second tool limit (image generation). The bridge hands it to local consumers only, and the transport caps it at `MAX_TOOL_TIMEOUT_MS`
+- An ability that depends on what the site's connectors can do (`editor/generate-image`) is registered only when PHP reports support through its module's `script_module_data_*` filter. A tool the model can see but never use invites it to fail, or to improvise around it
+- Media must come from the Media Library. Never let an ability, or the system instruction, send the model to a URL it found or made up; generated files are sideloaded and referenced by attachment `id` and local `url`
 - Every `type: 'array'` in an **input** schema needs `items`, at every depth. Gemini rejects a function declaration without it and fails the whole chat request, not just that one tool. Output schemas are never sent to a provider, so they are free to be loose
 - Callbacks may assume they run in the block editor; guard with the `core/block-editor` store and throw clear errors otherwise
 - Use `window.wp.data` and `window.wp.blocks` (classic globals). Only `@wordpress/abilities` is imported as a script module
@@ -101,6 +106,7 @@ Two goals:
 - Every function call in `metadata.wire` must be followed by a tool turn answering it, or providers reject the replay. A round cut short (Stop, the round limit) answers its unrun calls with a "Not run" error. Emit `wire` as a fresh snapshot each time; the AI SDK stores the array it is given, so mutating one after emitting it changes the stored message
 - Replay assistant turns from the `parts` the previous response returned, so function call IDs survive the trip through the browser. That is `historyMode: 'native'` and it is what every turn tries first. Those raw parts ride on the UI message's `metadata.wire`, because anything reconstructed from the rendered message would have lost them
 - Gemini requires the thought signature it issued with a function call to come back with that call. The endpoint replays `thoughtSignature` whenever a part carries one, and the Google connector carries it from 1.2.0, but an older connector or another provider may not. A turn that fails that way is retried once as `historyMode: 'text'` (tool calls and results replayed as a transcript) and the client reports the working mode back, so a conversation discovers it at most once
+- Image generation is a separate endpoint (`includes/image-rest.php`), not part of the chat turn: the chat's builder carries a text model preference, a system instruction and function declarations, and every one of those is a requirement an image model would have to meet. The image builder sets only the output orientation
 - Tools come from the page, not from the server: `listTools()` reads whatever WebMCP has. Never hard-code a tool list into the chat
 - `src/chat/approval.ts` decides which calls wait for Approve/Deny: tools other scripts registered, tools whose ability declares `meta.agenticEditor.approval`, and arguments carrying script-capable HTML. Ordinary editor edits run without asking, because undo reverts them. The transport pauses inside the stream until `respondToApproval()`, rather than ending it the way the AI SDK's own approval flow does
 - Page context (`getContext`) is attached to the latest user message as `<page_context>`, never to the system instruction, since it can quote content other people wrote

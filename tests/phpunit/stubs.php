@@ -55,6 +55,11 @@ class WP_REST_Request {
 	public function get_json_params() {
 		return json_decode( $this->body, true );
 	}
+
+	public function get_param( $key ) {
+		$params = $this->get_json_params();
+		return is_array( $params ) && array_key_exists( $key, $params ) ? $params[ $key ] : null;
+	}
 }
 
 class WP_REST_Response {

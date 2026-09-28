@@ -34,6 +34,7 @@ function agentic_editor_asset_version( $relative_path ) {
 }
 
 require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/chat-rest.php';
+require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/image-rest.php';
 require_once AGENTIC_EDITOR_PLUGIN_DIR . 'includes/chat-assets.php';
 
 /**
@@ -95,12 +96,23 @@ function agentic_editor_enqueue_editor_abilities() {
 	);
 
 	wp_register_script_module(
+		'@agentic-editor/abilities/media',
+		AGENTIC_EDITOR_PLUGIN_URL . 'js/abilities/media.js',
+		array( '@wordpress/abilities', '@agentic-editor/abilities/shared' ),
+		agentic_editor_asset_version( 'js/abilities/media.js' )
+	);
+
+	// The apiFetch global the media abilities call the image endpoint with.
+	wp_enqueue_script( 'wp-api-fetch' );
+
+	wp_register_script_module(
 		'@agentic-editor/abilities',
 		AGENTIC_EDITOR_PLUGIN_URL . 'js/abilities.js',
 		array(
 			'@wordpress/abilities',
 			'@agentic-editor/abilities/block-editor',
 			'@agentic-editor/abilities/patterns',
+			'@agentic-editor/abilities/media',
 		),
 		agentic_editor_asset_version( 'js/abilities.js' )
 	);
@@ -128,6 +140,25 @@ function agentic_editor_enqueue_editor_abilities() {
 	);
 }
 add_action( 'enqueue_block_editor_assets', 'agentic_editor_enqueue_editor_abilities' );
+
+/**
+ * Tell the media abilities whether the site can generate images.
+ *
+ * `editor/generate-image` is only registered when it can, so a model on a site
+ * without an image-capable connector never sees the tool.
+ *
+ * @param array<string, mixed> $data Existing data.
+ * @return array<string, mixed>
+ */
+function agentic_editor_media_abilities_data( $data ) {
+	return array_merge(
+		is_array( $data ) ? $data : array(),
+		array(
+			'imageGeneration' => agentic_editor_user_can_generate_images() && agentic_editor_image_is_available(),
+		)
+	);
+}
+add_filter( 'script_module_data_@agentic-editor/abilities/media', 'agentic_editor_media_abilities_data' );
 
 /**
  * Enqueue the chat sidebar in the block editor.

@@ -3,6 +3,7 @@ import { readUIMessageStream } from 'ai';
 import { chatConfig } from '@agentic-editor/chat-config';
 import { callTool, listTools } from '@agentic-editor/webmcp-tools';
 import {
+	MAX_TOOL_TIMEOUT_MS,
 	TOOL_TIMEOUT_MS,
 	WordPressAiTransport,
 	type ChatUIMessage,
@@ -362,6 +363,59 @@ describe( 'WordPressAiTransport', () => {
 					type: 'dynamic-tool',
 					state: 'output-error',
 				} )
+			);
+		} finally {
+			vi.useRealTimers();
+		}
+	} );
+
+	it( 'waits longer for a tool that asks for it, up to the cap', async () => {
+		vi.useFakeTimers();
+		try {
+			vi.mocked( listTools ).mockResolvedValue( [
+				{
+					name: 'editor_generate-image',
+					description: 'Image',
+					source: 'local',
+					timeoutMs: 120_000,
+				},
+				{
+					name: 'editor_greedy',
+					description: 'Greedy',
+					source: 'local',
+					timeoutMs: 10 * MAX_TOOL_TIMEOUT_MS,
+				},
+			] );
+			respondWith(
+				callTurn( { id: 'call_1', name: 'editor_generate-image' } ),
+				callTurn( { id: 'call_2', name: 'editor_greedy' } ),
+				textTurn( 'Done.' )
+			);
+			let finish: ( result: any ) => void = () => {};
+			vi.mocked( callTool )
+				.mockReturnValueOnce(
+					new Promise( ( resolve ) => {
+						finish = resolve;
+					} )
+				)
+				.mockReturnValueOnce( new Promise( () => {} ) );
+
+			const pending = send( new WordPressAiTransport(), [
+				userMessage( 'Draw' ),
+			] );
+			// Past the usual limit, the image call is still waited on.
+			await vi.advanceTimersByTimeAsync( TOOL_TIMEOUT_MS * 2 );
+			finish( { isError: false, value: { id: 42 }, text: '' } );
+			await vi.advanceTimersByTimeAsync( MAX_TOOL_TIMEOUT_MS );
+			const { wire } = await pending;
+
+			expect( ( wire[ 1 ] as any ).responses[ 0 ].response ).toEqual( {
+				id: 42,
+			} );
+			expect(
+				( wire[ 3 ] as any ).responses[ 0 ].response.error
+			).toContain(
+				`did not finish within ${ MAX_TOOL_TIMEOUT_MS / 1000 } seconds`
 			);
 		} finally {
 			vi.useRealTimers();

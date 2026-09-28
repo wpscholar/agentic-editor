@@ -56,6 +56,14 @@ class FakePromptBuilder {
 		return true;
 	}
 
+	public function as_output_media_orientation( $orientation ) {
+		return $this;
+	}
+
+	public function is_supported_for_image_generation() {
+		return false;
+	}
+
 	public function generate_text_result() {
 		self::$calls[] = $this->call;
 		return array_shift( self::$results );
@@ -364,6 +372,7 @@ class ChatRequestTest extends TestCase {
 
 		$this->assertTrue( $data['hasAiClient'] );
 		$this->assertTrue( $data['available'] );
+		$this->assertFalse( $data['imageGeneration'] );
 		$this->assertSame( 'https://example.test/wp-admin/options-connectors.php', $data['connectorsUrl'] );
 	}
 

@@ -162,6 +162,14 @@ function toToolOutputSchema( schema ) {
 }
 
 /**
+ * @param {unknown} value
+ * @return {value is number} Whether value is a finite number above zero.
+ */
+function isPositiveNumber( value ) {
+	return typeof value === 'number' && Number.isFinite( value ) && value > 0;
+}
+
+/**
  * @param {Partial<Error>} error
  * @return {boolean}
  */
@@ -219,14 +227,16 @@ async function registerAbilityAsWebMCPTool( abilityName, modelContext ) {
 
 	// Keep the executor around so consumers on this page (the chat panel) can
 	// call the ability without depending on the optional executeTool() API.
-	// The approval reason is for this page's own consumers only; it is not a
-	// WebMCP descriptor key, so it is never passed to registerTool.
+	// The approval reason and timeout are for this page's own consumers only;
+	// they are not WebMCP descriptor keys, so they never reach registerTool.
 	const approval = ability.meta?.agenticEditor?.approval;
+	const timeoutMs = ability.meta?.agenticEditor?.timeoutMs;
 	const remember = () =>
 		rememberLocalTool( {
 			...tool,
 			...optional,
 			...( typeof approval === 'string' ? { approval } : {} ),
+			...( isPositiveNumber( timeoutMs ) ? { timeoutMs } : {} ),
 		} );
 
 	try {
