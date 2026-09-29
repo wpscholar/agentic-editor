@@ -22,18 +22,16 @@ const ReactDOM = window.ReactDOM;
 
 if ( ! ReactDOM ) {
 	throw new Error(
-		'[contributor-day] window.ReactDOM is missing. Enqueue the "react-dom" script before this module.'
+		'[agentic-editor] window.ReactDOM is missing. Enqueue the "react-dom" script before this module.'
 	);
 }
 
 export default ReactDOM;
 
-export const {
-	createPortal,
-	flushSync,
-	unstable_batchedUpdates,
-	version,
-} = ReactDOM;
+// React's own export name, which callers import as-is.
+// eslint-disable-next-line camelcase
+export const { createPortal, flushSync, unstable_batchedUpdates, version } =
+	ReactDOM;
 
 /*
  * `createRoot` and `hydrateRoot` live in `react-dom/client` as far as the

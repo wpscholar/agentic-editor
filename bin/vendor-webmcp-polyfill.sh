@@ -16,7 +16,9 @@ if [ ! -d "${PACKAGE}/dist" ]; then
 	exit 1
 fi
 
-VERSION="$(node -p "require('${PACKAGE}/package.json').version")"
+# The path goes in as an argument, not into the script text, so a checkout
+# path containing a quote cannot break (or inject into) the JavaScript.
+VERSION="$(node -p "require(process.argv[1]).version" "${PACKAGE}/package.json")"
 
 rm -rf "${TARGET}"
 mkdir -p "${TARGET}"

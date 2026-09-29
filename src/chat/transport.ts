@@ -11,9 +11,15 @@
  * Nothing here touches the DOM or the block editor.
  */
 
-import { chatConfig } from '@contributor-day/chat-config';
-import { callTool, listTools } from '@contributor-day/webmcp-tools';
+import { chatConfig } from '@agentic-editor/chat-config';
+import {
+	callTool,
+	listTools,
+	type WebMcpTool,
+	type WebMcpToolResult,
+} from '@agentic-editor/webmcp-tools';
 import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai';
+import { approvalReason } from './approval';
 
 /**
  * What a turn is replayed from.
@@ -25,6 +31,8 @@ import type { ChatTransport, UIMessage, UIMessageChunk } from 'ai';
  */
 export interface ChatMetadata {
 	wire?: WireMessage[];
+	/** What the user attached to this message, for the transcript only. */
+	attachment?: { label: string };
 	model?: string;
 	provider?: string;
 }
@@ -51,6 +59,8 @@ interface ToolCall {
 interface TurnResponse {
 	message?: { role: string; parts: unknown[] };
 	text?: string;
+	/** The model's thinking, when the provider returned any. */
+	reasoning?: string;
 	toolCalls?: ToolCall[];
 	meta?: { provider?: string; model?: string };
 	historyMode?: HistoryMode;
@@ -59,6 +69,17 @@ interface TurnResponse {
 type HistoryMode = 'native' | 'text';
 
 type Emit = ( chunk: UIMessageChunk< ChatMetadata > ) => void;
+
+/**
+ * How long one tool call may run before the loop gives up on it. Abilities
+ * cannot be cancelled once started, so this only stops the loop waiting.
+ */
+export const TOOL_TIMEOUT_MS = 30_000;
+
+/**
+ * The longest a tool may ask to be waited on, however long it says it needs.
+ */
+export const MAX_TOOL_TIMEOUT_MS = 300_000;
 
 let idCounter = 0;
 
@@ -75,7 +96,10 @@ function errorMessage( error: unknown ): string {
 }
 
 function isAbort( error: unknown ): boolean {
-	return error instanceof Error && error.name === 'AbortError';
+	return (
+		( error instanceof Error || error instanceof DOMException ) &&
+		error.name === 'AbortError'
+	);
 }
 
 /**
@@ -102,6 +126,87 @@ function toWireMessages( message: ChatUIMessage ): WireMessage[] {
 	return [];
 }
 
+/**
+ * A tool turn answering every call with the same error.
+ *
+ * Providers reject a function call that has no response, so a round that is
+ * cut short still has to answer each call, and saying why lets the model take
+ * it into account on the next message.
+ */
+function notRunTurn(
+	toolCalls: ToolCall[],
+	reason: string
+): { role: 'tool'; responses: ToolResponse[] } {
+	return {
+		role: 'tool',
+		responses: toolCalls.map( ( call ) => ( {
+			id: call.id,
+			name: call.name,
+			response: { error: reason },
+		} ) ),
+	};
+}
+
+/**
+ * Run a tool call, but stop waiting on Stop or after its timeout: the tool's
+ * own `timeoutMs` when it set one, capped at MAX_TOOL_TIMEOUT_MS, and
+ * TOOL_TIMEOUT_MS otherwise.
+ *
+ * WebMCP has no way to cancel a call in progress, so a call abandoned here may
+ * still finish in the background; the loop just no longer waits for it.
+ */
+async function callToolWithLimits(
+	name: string,
+	input: Record< string, unknown >,
+	abortSignal: AbortSignal | undefined,
+	timeoutMs: number = TOOL_TIMEOUT_MS
+): Promise< WebMcpToolResult > {
+	const limit = Math.min( timeoutMs, MAX_TOOL_TIMEOUT_MS );
+	let timer: ReturnType< typeof setTimeout > | undefined;
+	let onAbort: ( () => void ) | undefined;
+
+	const timeout = new Promise< WebMcpToolResult >( ( resolve ) => {
+		timer = setTimeout( () => {
+			const text = `${ name } did not finish within ${
+				limit / 1000
+			} seconds, so its result is unknown. Check the current state before retrying.`;
+			resolve( { isError: true, value: { error: text }, text } );
+		}, limit );
+	} );
+
+	const aborted = new Promise< never >( ( _resolve, reject ) => {
+		onAbort = () => reject( new DOMException( 'Stopped', 'AbortError' ) );
+		abortSignal?.addEventListener( 'abort', onAbort, { once: true } );
+	} );
+
+	try {
+		abortSignal?.throwIfAborted();
+		return await Promise.race( [
+			callTool( name, input ),
+			timeout,
+			aborted,
+		] );
+	} finally {
+		clearTimeout( timer );
+		if ( onAbort ) {
+			abortSignal?.removeEventListener( 'abort', onAbort );
+		}
+	}
+}
+
+/** Whether a response is WordPress rejecting an expired REST nonce. */
+async function isExpiredNonce( response: Response ): Promise< boolean > {
+	if ( response.status !== 403 ) {
+		return false;
+	}
+	try {
+		const body = await response.clone().json();
+		return body?.code === 'rest_cookie_invalid_nonce';
+	} catch {
+		return false;
+	}
+}
+
 async function readErrorMessage( response: Response ): Promise< string > {
 	try {
 		const body = await response.json();
@@ -116,17 +221,14 @@ async function readErrorMessage( response: Response ): Promise< string > {
 
 export interface WordPressAiTransportOptions {
 	/**
-	 * Page context for the system prompt, read at send time so that it
-	 * describes the screen as it is now rather than as it was at mount.
+	 * Page context for the user's latest message, read at send time so that
+	 * it describes the screen as it is now rather than as it was at mount.
 	 */
 	getContext?: () => Record< string, unknown >;
-	/** Whether to offer the page's WebMCP tools to the model. */
-	useTools?: boolean;
 }
 
 export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 	private readonly getContext: () => Record< string, unknown >;
-	private readonly useTools: boolean;
 
 	/**
 	 * How the server replayed tool calls last turn. Reporting it back keeps a
@@ -135,9 +237,17 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 	 */
 	private historyMode: HistoryMode = 'native';
 
+	/** Starts as the page's nonce and is renewed when it expires. */
+	private nonce: string = chatConfig.nonce;
+
+	/** Tool calls waiting on a person, by approval ID. */
+	private readonly pendingApprovals = new Map<
+		string,
+		( approved: boolean ) => void
+	>();
+
 	constructor( options: WordPressAiTransportOptions = {} ) {
 		this.getContext = options.getContext ?? ( () => ( {} ) );
-		this.useTools = options.useTools ?? true;
 	}
 
 	sendMessages( options: {
@@ -147,24 +257,30 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 		messages: ChatUIMessage[];
 		abortSignal: AbortSignal | undefined;
 	} ): Promise< ReadableStream< UIMessageChunk< ChatMetadata > > > {
-		const { messages, abortSignal } = options;
+		const { messages } = options;
 
 		/*
-		 * Regenerating replaces the last assistant turn, so it must not be part
-		 * of the history the model is asked to continue from.
+		 * The reader can go away without Stop being pressed (the panel
+		 * unmounting, say). That has to end the loop too, or it would carry
+		 * on sending paid requests nobody reads, and enqueueing after it
+		 * would throw.
 		 */
-		const history =
-			options.trigger === 'regenerate-message' &&
-			messages.at( -1 )?.role === 'assistant'
-				? messages.slice( 0, -1 )
-				: messages;
+		let closed = false;
+		const cancelled = new AbortController();
+		const abortSignal = options.abortSignal
+			? AbortSignal.any( [ options.abortSignal, cancelled.signal ] )
+			: cancelled.signal;
 
 		const stream = new ReadableStream< UIMessageChunk< ChatMetadata > >( {
 			start: async ( controller ) => {
-				const emit: Emit = ( chunk ) => controller.enqueue( chunk );
+				const emit: Emit = ( chunk ) => {
+					if ( ! closed ) {
+						controller.enqueue( chunk );
+					}
+				};
 
 				try {
-					await this.run( history, emit, abortSignal );
+					await this.run( messages, emit, abortSignal );
 				} catch ( error ) {
 					if ( ! isAbort( error ) ) {
 						emit( {
@@ -173,12 +289,54 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 						} );
 					}
 				} finally {
-					controller.close();
+					if ( ! closed ) {
+						closed = true;
+						controller.close();
+					}
 				}
+			},
+			cancel: () => {
+				closed = true;
+				cancelled.abort();
 			},
 		} );
 
 		return Promise.resolve( stream );
+	}
+
+	/**
+	 * Answer a tool call that is waiting for approval.
+	 *
+	 * The loop waits inside the stream rather than ending it, as the AI SDK's
+	 * own approval flow would, so the round carries on where it paused.
+	 */
+	respondToApproval( approvalId: string, approved: boolean ): void {
+		const resolve = this.pendingApprovals.get( approvalId );
+		if ( resolve ) {
+			this.pendingApprovals.delete( approvalId );
+			resolve( approved );
+		}
+	}
+
+	private waitForApproval(
+		approvalId: string,
+		abortSignal: AbortSignal | undefined
+	): Promise< boolean > {
+		return new Promise( ( resolve, reject ) => {
+			const onAbort = () => {
+				this.pendingApprovals.delete( approvalId );
+				reject( new DOMException( 'Stopped', 'AbortError' ) );
+			};
+			if ( abortSignal?.aborted ) {
+				onAbort();
+				return;
+			}
+			abortSignal?.addEventListener( 'abort', onAbort, { once: true } );
+			this.pendingApprovals.set( approvalId, ( approved ) => {
+				abortSignal?.removeEventListener( 'abort', onAbort );
+				resolve( approved );
+			} );
+		} );
 	}
 
 	reconnectToStream(): Promise< ReadableStream<
@@ -193,13 +351,39 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 		emit: Emit,
 		abortSignal: AbortSignal | undefined
 	): Promise< void > {
+		// A conversation with no assistant turn yet is a new one, so it gets
+		// to try native history again, even after Clear on the same page.
+		if ( ! history.some( ( message ) => message.role === 'assistant' ) ) {
+			this.historyMode = 'native';
+		}
+
 		const wire: WireMessage[] = history.flatMap( toWireMessages );
 
 		// Only the turns produced now belong to the message being built.
 		const produced: WireMessage[] = [];
-		const metadata: ChatMetadata = { wire: produced };
+		const metadata: ChatMetadata = {};
 
-		const tools = this.useTools ? await listTools() : [];
+		/*
+		 * The AI SDK keeps whatever array a metadata chunk carries, so every
+		 * chunk gets a fresh snapshot rather than a live array that later
+		 * rounds would change underneath the stored message. `pending` is a
+		 * round still in progress, included so that the stored history always
+		 * pairs every function call with a response, wherever Stop lands.
+		 */
+		const snapshot = ( pending: WireMessage[] = [] ): ChatMetadata => ( {
+			...metadata,
+			wire: [ ...produced, ...pending ],
+		} );
+		const publish = ( pending?: WireMessage[] ) =>
+			emit( {
+				type: 'message-metadata',
+				messageMetadata: snapshot( pending ),
+			} );
+
+		const tools = await listTools();
+		const toolsByName = new Map(
+			tools.map( ( tool ) => [ tool.name, tool ] )
+		);
 		const declarations = tools.map( ( tool ) => ( {
 			name: tool.name,
 			description: tool.description,
@@ -223,14 +407,25 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 
 			const parts = payload.message?.parts ?? [];
 			const assistantTurn: WireMessage = { role: 'assistant', parts };
-			wire.push( assistantTurn );
-			produced.push( assistantTurn );
 
 			if ( payload.meta?.model ) {
 				metadata.model = payload.meta.model;
 			}
 			if ( payload.meta?.provider ) {
 				metadata.provider = payload.meta.provider;
+			}
+
+			// Thinking comes before what it led to, the way a provider
+			// that streams would have sent it.
+			if ( payload.reasoning ) {
+				const reasoningId = nextId( 'reasoning' );
+				emit( { type: 'reasoning-start', id: reasoningId } );
+				emit( {
+					type: 'reasoning-delta',
+					id: reasoningId,
+					delta: payload.reasoning,
+				} );
+				emit( { type: 'reasoning-end', id: reasoningId } );
 			}
 
 			if ( payload.text ) {
@@ -252,13 +447,21 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 			const toolCalls = payload.toolCalls ?? [];
 
 			if ( ! toolCalls.length ) {
+				produced.push( assistantTurn );
 				emit( { type: 'finish-step' } );
-				emit( { type: 'message-metadata', messageMetadata: metadata } );
-				emit( { type: 'finish', messageMetadata: metadata } );
+				emit( { type: 'finish', messageMetadata: snapshot() } );
 				return;
 			}
 
 			if ( round === maxRounds ) {
+				produced.push(
+					assistantTurn,
+					notRunTurn(
+						toolCalls,
+						`Not run: the assistant reached its limit of ${ maxRounds } rounds of tool calls.`
+					)
+				);
+				publish();
 				emit( { type: 'finish-step' } );
 				emit( {
 					type: 'error',
@@ -267,32 +470,54 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 				return;
 			}
 
-			const responses = await this.runToolCalls(
+			// Filled in as each call completes; anything left was never run.
+			let toolTurn = notRunTurn(
 				toolCalls,
+				'Not run: the user stopped the assistant.'
+			);
+			publish( [ assistantTurn, toolTurn ] );
+
+			await this.runToolCalls(
+				toolCalls,
+				toolsByName,
 				emit,
-				abortSignal
+				abortSignal,
+				( index, response ) => {
+					// A new turn each time: the last one is already emitted.
+					toolTurn = {
+						role: 'tool',
+						responses: toolTurn.responses.map(
+							( existing, position ) =>
+								position === index ? response : existing
+						),
+					};
+					publish( [ assistantTurn, toolTurn ] );
+				}
 			);
 
-			const toolTurn: WireMessage = { role: 'tool', responses };
-			wire.push( toolTurn );
-			produced.push( toolTurn );
+			wire.push( assistantTurn, toolTurn );
+			produced.push( assistantTurn, toolTurn );
 
 			emit( { type: 'finish-step' } );
-			emit( { type: 'message-metadata', messageMetadata: metadata } );
 		}
 	}
 
 	private async runToolCalls(
 		toolCalls: ToolCall[],
+		toolsByName: Map< string, WebMcpTool >,
 		emit: Emit,
-		abortSignal: AbortSignal | undefined
-	): Promise< ToolResponse[] > {
-		const responses: ToolResponse[] = [];
-
-		for ( const call of toolCalls ) {
+		abortSignal: AbortSignal | undefined,
+		onResponse: ( index: number, response: ToolResponse ) => void
+	): Promise< void > {
+		for ( const [ index, call ] of toolCalls.entries() ) {
 			abortSignal?.throwIfAborted();
 
-			const toolCallId = call.id ?? nextId( 'call' );
+			/*
+			 * The UI's own ID for this call. The provider's ID is only unique
+			 * within its round, and a provider that restarts its numbering
+			 * each round would otherwise overwrite earlier calls on screen.
+			 */
+			const toolCallId = nextId( 'call' );
 			const input = call.arguments ?? {};
 
 			/*
@@ -308,7 +533,62 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 				dynamic: true,
 			} );
 
-			const result = await callTool( call.name, input );
+			const reason = approvalReason(
+				toolsByName.get( call.name ),
+				input
+			);
+			if ( reason ) {
+				const approvalId = nextId( 'approval' );
+				emit( {
+					type: 'tool-approval-request',
+					approvalId,
+					toolCallId,
+					reason,
+				} );
+
+				const approved = await this.waitForApproval(
+					approvalId,
+					abortSignal
+				);
+				emit( {
+					type: 'tool-approval-response',
+					approvalId,
+					approved,
+				} );
+
+				if ( ! approved ) {
+					emit( { type: 'tool-output-denied', toolCallId } );
+					onResponse( index, {
+						id: call.id,
+						name: call.name,
+						response: {
+							error: 'Not run: the user declined this action.',
+						},
+					} );
+					continue;
+				}
+			}
+
+			let result: WebMcpToolResult;
+			try {
+				result = await callToolWithLimits(
+					call.name,
+					input,
+					abortSignal,
+					toolsByName.get( call.name )?.timeoutMs
+				);
+			} catch ( error ) {
+				if ( isAbort( error ) ) {
+					onResponse( index, {
+						id: call.id,
+						name: call.name,
+						response: {
+							error: 'Stopped by the user while this was running, so it may or may not have taken effect.',
+						},
+					} );
+				}
+				throw error;
+			}
 
 			if ( result.isError ) {
 				emit( {
@@ -326,14 +606,12 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 				} );
 			}
 
-			responses.push( {
+			onResponse( index, {
 				id: call.id,
 				name: call.name,
 				response: result.value,
 			} );
 		}
-
-		return responses;
 	}
 
 	private async requestTurn(
@@ -341,21 +619,28 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 		tools: unknown[],
 		abortSignal: AbortSignal | undefined
 	): Promise< TurnResponse > {
-		const response = await fetch( chatConfig.restUrl, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-WP-Nonce': chatConfig.nonce,
-			},
-			signal: abortSignal,
-			body: JSON.stringify( {
-				messages,
-				tools,
-				context: this.getContext() || {},
-				historyMode: this.historyMode,
-			} ),
+		const body = JSON.stringify( {
+			messages,
+			tools,
+			context: this.getContext() || {},
+			historyMode: this.historyMode,
 		} );
+
+		let response = await this.post( body, abortSignal );
+
+		/*
+		 * A REST nonce lasts a day at most, and an editor tab can stay open
+		 * longer. Renew it once, the way core's own apiFetch middleware does,
+		 * rather than failing every send until the page is reloaded.
+		 */
+		if ( await isExpiredNonce( response ) ) {
+			if ( ! ( await this.renewNonce( abortSignal ) ) ) {
+				throw new Error(
+					'Your login session has expired. Reload the page, logging in again if asked, and resend your message.'
+				);
+			}
+			response = await this.post( body, abortSignal );
+		}
 
 		if ( ! response.ok ) {
 			throw new Error( await readErrorMessage( response ) );
@@ -368,5 +653,48 @@ export class WordPressAiTransport implements ChatTransport< ChatUIMessage > {
 		}
 
 		return payload;
+	}
+
+	private post(
+		body: string,
+		abortSignal: AbortSignal | undefined
+	): Promise< Response > {
+		return fetch( chatConfig.restUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-WP-Nonce': this.nonce,
+			},
+			signal: abortSignal,
+			body,
+		} );
+	}
+
+	/** Fetch a fresh REST nonce; false when the login itself has expired. */
+	private async renewNonce(
+		abortSignal: AbortSignal | undefined
+	): Promise< boolean > {
+		if ( ! chatConfig.nonceUrl ) {
+			return false;
+		}
+		try {
+			const response = await fetch( chatConfig.nonceUrl, {
+				credentials: 'same-origin',
+				signal: abortSignal,
+			} );
+			const nonce = ( await response.text() ).trim();
+			// Anything else, such as "0" for a logged-out user, is a failure.
+			if ( ! response.ok || ! /^[a-f0-9]{10}$/.test( nonce ) ) {
+				return false;
+			}
+			this.nonce = nonce;
+			return true;
+		} catch ( error ) {
+			if ( isAbort( error ) ) {
+				throw error;
+			}
+			return false;
+		}
 	}
 }

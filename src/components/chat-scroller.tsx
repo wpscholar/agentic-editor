@@ -20,9 +20,15 @@ const EDGE_THRESHOLD = 32;
 export function ChatScroller( {
 	children,
 	className,
+	followKey,
 }: {
 	children: React.ReactNode;
 	className?: string;
+	/**
+	 * Changes when the reader acts, such as sending a message, which brings
+	 * them back to the live edge even if they had scrolled away.
+	 */
+	followKey?: unknown;
 } ) {
 	const viewportRef = React.useRef< HTMLDivElement >( null );
 	const contentRef = React.useRef< HTMLDivElement >( null );
@@ -53,11 +59,18 @@ export function ChatScroller( {
 
 	/*
 	 * Growing content is what moves the reader, not the scroll event, so the
-	 * transcript is measured rather than watched for renders.
+	 * transcript is measured rather than watched for renders. The viewport is
+	 * measured too: a sidebar or window that shrinks would otherwise leave a
+	 * following reader short of the bottom.
 	 */
 	React.useEffect( () => {
 		const content = contentRef.current;
-		if ( ! content || typeof ResizeObserver === 'undefined' ) {
+		const viewport = viewportRef.current;
+		if (
+			! content ||
+			! viewport ||
+			typeof ResizeObserver === 'undefined'
+		) {
 			return;
 		}
 
@@ -68,8 +81,20 @@ export function ChatScroller( {
 		} );
 
 		observer.observe( content );
+		observer.observe( viewport );
 		return () => observer.disconnect();
 	}, [ scrollToBottom ] );
+
+	// Skipped on mount, when there is nothing to come back to yet.
+	const firstFollowKey = React.useRef( true );
+	React.useEffect( () => {
+		if ( firstFollowKey.current ) {
+			firstFollowKey.current = false;
+			return;
+		}
+		setFollowing( true );
+		scrollToBottom();
+	}, [ followKey, scrollToBottom ] );
 
 	return (
 		<div className={ cn( 'relative min-h-0 flex-1', className ) }>
@@ -77,8 +102,11 @@ export function ChatScroller( {
 				ref={ viewportRef }
 				onScroll={ handleScroll }
 				className="h-full overflow-y-auto overscroll-contain px-3 py-4"
+				// A log, but not a live region: announcing every tool call and
+				// every re-render is noise. The panel announces finished
+				// replies on their own.
 				role="log"
-				aria-live="polite"
+				aria-live="off"
 			>
 				<div ref={ contentRef } className="flex flex-col gap-4">
 					{ children }

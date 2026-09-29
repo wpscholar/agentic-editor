@@ -7,13 +7,17 @@
  * described here.
  */
 
-declare module '@contributor-day/webmcp-tools' {
+declare module '@agentic-editor/webmcp-tools' {
 	export interface WebMcpTool {
 		name: string;
 		description: string;
 		inputSchema?: Record< string, unknown >;
 		annotations?: Record< string, unknown >;
 		source: 'local' | 'webmcp';
+		/** Why each call needs a person's approval; only set on local tools. */
+		approval?: string;
+		/** How long to wait for a call, when longer than usual; only set on local tools. */
+		timeoutMs?: number;
 	}
 
 	export interface WebMcpToolResult {

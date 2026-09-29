@@ -23,7 +23,7 @@ const React = window.React;
 
 if ( ! React ) {
 	throw new Error(
-		'[contributor-day] window.React is missing. Enqueue the "react" script before this module.'
+		'[agentic-editor] window.React is missing. Enqueue the "react" script before this module.'
 	);
 }
 

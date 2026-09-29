@@ -1,14 +1,11 @@
 /**
  * The automatic JSX runtime, taken from WordPress.
  *
- * WordPress ships this as the `react-jsx-runtime` script, which assigns
- * `window.ReactJSXRuntime`. Older setups may not have it, so the runtime is
- * rebuilt from `createElement` when the global is absent — slower, but it keeps
- * every element coming from the one React instance, which is the part that
- * matters.
+ * WordPress 7.0 ships this as the `react-jsx-runtime` script, which assigns
+ * `window.ReactJSXRuntime`. PHP enqueues it on every screen the chat loads on,
+ * so a missing global is an enqueue bug, reported as one rather than papered
+ * over with a slower runtime that also hides React's key warnings.
  */
-
-import React from './react';
 
 type JsxFactory = (
 	type: unknown,
@@ -29,29 +26,12 @@ declare global {
 	}
 }
 
-const fromCreateElement: JsxFactory = ( type, props, key ) => {
-	const { children, ...rest } = props ?? {};
-	const attributes = key === undefined ? rest : { ...rest, key };
-
-	return Array.isArray( children )
-		? React.createElement(
-				type as never,
-				attributes,
-				...( children as React.ReactNode[] )
-		  )
-		: React.createElement(
-				type as never,
-				attributes,
-				children as React.ReactNode
-		  );
-};
-
-const runtime: JsxRuntimeGlobal = window.ReactJSXRuntime ?? {
-	jsx: fromCreateElement,
-	jsxs: fromCreateElement,
-	jsxDEV: fromCreateElement,
-	Fragment: React.Fragment,
-};
+const runtime = window.ReactJSXRuntime;
+if ( ! runtime ) {
+	throw new Error(
+		'[agentic-editor] window.ReactJSXRuntime is missing. Enqueue the react-jsx-runtime script on this screen.'
+	);
+}
 
 export const Fragment = runtime.Fragment;
 export const jsx = runtime.jsx;

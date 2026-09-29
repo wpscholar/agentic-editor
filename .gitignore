@@ -5,3 +5,12 @@ node_modules/
 build/
 dist/
 *.zip
+test-results/
+playwright-report/
+playwright/.auth/
+/vendor/
+.phpunit.result.cache
+blob-report/
+playwright/.cache/
+.env*
+*.tsbuildinfo

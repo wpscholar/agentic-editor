@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": [ "ES2022", "DOM", "DOM.Iterable" ],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+		"skipLibCheck": true,
+		"strict": false,
+		"paths": {
+			"@agentic-editor/abilities": [ "./js/abilities.js" ],
+			"@agentic-editor/abilities/*": [ "./js/abilities/*.js" ],
+			"@agentic-editor/webmcp-bridge": [ "./js/webmcp-bridge.js" ],
+			"@agentic-editor/webmcp-polyfill": [ "./js/webmcp-polyfill.js" ],
+			"@agentic-editor/webmcp-tools": [ "./js/webmcp-tools.js" ]
+		}
+	},
+	"include": [ "js/**/*.js", "js/types/*.d.ts" ],
+	"exclude": [ "js/vendor" ]
+}

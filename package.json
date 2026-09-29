@@ -1,38 +1,91 @@
 {
-  "name": "contributor-day",
+  "name": "agentic-editor",
   "private": true,
   "type": "module",
   "description": "Client-side block editor abilities bridged to WebMCP",
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch --mode development",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node node_modules/typescript-native/bin/tsc --noEmit && node node_modules/typescript-native/bin/tsc -p tsconfig.js.json",
+    "test": "vitest run",
+    "test:php": "composer test",
     "start": "wp-playground-cli start --skip-browser --wp=latest",
     "start:reset": "wp-playground-cli start --skip-browser --wp=latest --reset",
+    "start:ai": "node bin/start-ai.mjs",
+    "start:ai:reset": "node bin/start-ai.mjs --reset",
     "vendor": "bash bin/vendor-webmcp-polyfill.sh",
-    "zip": "bash bin/build-zip.sh"
+    "zip": "bash bin/build-zip.sh",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "lint": "npm run lint:js && npm run lint:php",
+    "lint:js": "eslint .",
+    "lint:php": "composer lint",
+    "format": "prettier --write \"js/**/*.js\" \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"*.{ts,mjs}\""
   },
   "devDependencies": {
-    "@mcp-b/webmcp-polyfill": "^4.0.0",
+    "@mcp-b/webmcp-polyfill": "^5.1.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.0.5",
-    "@wp-playground/cli": "latest",
+    "@wordpress/eslint-plugin": "^27.0.0",
+    "@wordpress/prettier-config": "^4.56.0",
+    "@wp-playground/cli": "^3.1.55",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "prettier": "npm:wp-prettier@^3.9.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2",
-    "vite": "^8.2.1"
+    "typescript": "~6.0.3",
+    "typescript-native": "npm:typescript@^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.1"
   },
   "dependencies": {
-    "@ai-sdk/react": "^4.0.69",
-    "ai": "^7.0.66",
+    "@ai-sdk/react": "^4.0.117",
+    "ai": "^7.0.114",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.31.0",
+    "lucide-react": "^1.48.0",
     "radix-ui": "^1.6.7",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
+  },
+  "overrides": {
+    "lightningcss": "^1.33.0",
+    "express": "^4.22.3",
+    "eslint-plugin-import": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    }
+  },
+  "engines": {
+    "node": "^24.18.0",
+    "npm": ">=11.16.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.18.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=11.16.0",
+      "onFail": "error"
+    }
+  },
+  "prettier": "@wordpress/prettier-config",
+  "allowScripts": {
+    "fs-ext-extra-prebuilt@2.2.7": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true
   }
 }

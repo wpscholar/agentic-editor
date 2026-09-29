@@ -123,9 +123,12 @@
 	}
 
 	/*
-	 * wp-admin styles buttons and form controls globally and with enough
-	 * specificity to beat a utility class, so they are reset back to something
-	 * the components can style themselves.
+	 * wp-admin styles buttons and form controls globally, so they are reset
+	 * back to something the components can style themselves. This only goes
+	 * so far: wp-admin's stylesheets are not in a cascade layer, so where they
+	 * style a bare element (forms.css does `textarea`), they beat this reset
+	 * and every utility. A component that must override one of those
+	 * properties uses an important utility (`rounded-xl!`), which does win.
 	 */
 	.cdchat button,
 	.cdchat input,

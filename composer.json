@@ -1,0 +1,40 @@
+{
+	"name": "wpscholar/agentic-editor",
+	"description": "Client-side block editor abilities bridged to WebMCP, with an AI chat panel.",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=8.0"
+	},
+	"require-dev": {
+		"brain/monkey": "^2.6",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+		"php-stubs/wordpress-stubs": "^7.1",
+		"phpcompatibility/phpcompatibility-wp": "^2.1",
+		"phpstan/phpstan": "^2.2",
+		"phpunit/phpunit": "^9.6",
+		"szepeviktor/phpstan-wordpress": "^2.0",
+		"wordpress/php-ai-client": "^1.5",
+		"wp-coding-standards/wpcs": "^3.4"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true,
+			"php-http/discovery": false
+		},
+		"platform": {
+			"php": "8.0.30"
+		},
+		"sort-packages": true
+	},
+	"scripts": {
+		"lint": [
+			"@lint:phpcs",
+			"@lint:phpstan"
+		],
+		"lint:phpcs": "phpcs",
+		"lint:phpstan": "phpstan analyse --memory-limit=1G",
+		"format": "phpcbf",
+		"test": "phpunit"
+	}
+}

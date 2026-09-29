@@ -1,0 +1,61 @@
+name: Attach release zip
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  # Every check a pull request runs; nothing is attached unless they pass.
+  tests:
+    uses: ./.github/workflows/e2e-tests.yml
+
+  build:
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check the tag matches the plugin version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(sed -n 's/^ \* Version: *//p' agentic-editor.php | tr -d '[:space:]')"
+          if [ -z "$version" ]; then
+            echo "::error file=agentic-editor.php::No Version: header found."
+            exit 1
+          fi
+          if [ "${TAG#v}" != "$version" ]; then
+            echo "::error file=agentic-editor.php::Release tag $TAG does not match Version: $version in agentic-editor.php."
+            exit 1
+          fi
+          constant="$(sed -n "s/.*define( 'AGENTIC_EDITOR_VERSION', '\([^']*\)' ).*/\1/p" agentic-editor.php)"
+          if [ "$constant" != "$version" ]; then
+            echo "::error file=agentic-editor.php::AGENTIC_EDITOR_VERSION ($constant) does not match Version: $version."
+            exit 1
+          fi
+          echo "Releasing $version"
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build plugin zip
+        run: npm run zip
+
+      - name: Attach zip to release
+        # Pinned to a commit: this step holds contents: write.
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          files: dist/agentic-editor.zip

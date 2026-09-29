@@ -19,6 +19,17 @@
 }
 
 /*
+ * `ComplementaryArea` sets its own width as an inline style (280px, the core
+ * default), which doesn't grow with the skeleton region above. Without this
+ * the panel is left pinned to 280px inside the wider 350px region, leaving a
+ * blank strip down the right side.
+ */
+.interface-interface-skeleton__sidebar:has( .cdchat-sidebar ) .interface-complementary-area__fill,
+.interface-interface-skeleton__sidebar:has( .cdchat-sidebar ) .interface-complementary-area {
+	width: 100% !important;
+}
+
+/*
  * The panel has to fill the space under the sidebar header without spilling
  * past it, so the column stretches rather than being given `height: 100%` —
  * that measures the whole area including the header, and pushes the composer
@@ -41,20 +52,4 @@
 	flex: 1 1 auto;
 	height: auto;
 	min-height: 0;
-}
-
-/* Standalone screen */
-
-.contributor-day-chat-page__intro {
-	max-width: 75em;
-}
-
-.contributor-day-chat-page__panel {
-	max-width: 75em;
-	height: calc( 100vh - 220px );
-	min-height: 380px;
-	overflow: hidden;
-	background: #fff;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
 }

@@ -5,8 +5,8 @@
  */
 
 import { executeAbility, getAbility } from '@wordpress/abilities';
-import { getModelContext } from '@contributor-day/webmcp-polyfill';
-import { rememberLocalTool } from '@contributor-day/webmcp-tools';
+import { getModelContext } from '@agentic-editor/webmcp-polyfill';
+import { rememberLocalTool } from '@agentic-editor/webmcp-tools';
 
 /**
  * WebMCP tool names may include alphanumerics, _, -, and .
@@ -21,7 +21,7 @@ export function toToolName( abilityName ) {
 
 /**
  * @param {Object} [ability]
- * @return {{ readOnlyHint: boolean }|undefined}
+ * @return {{ readOnlyHint: boolean, untrustedContentHint?: boolean }|undefined}
  */
 function toToolAnnotations( ability ) {
 	const annotations = ability?.meta?.annotations;
@@ -30,9 +30,17 @@ function toToolAnnotations( ability ) {
 	}
 
 	// Only WebMCP-supported annotation keys (unknown keys can break registration).
-	return {
+	const hints = {
 		readOnlyHint: !! annotations.readonly,
 	};
+
+	// Block content and patterns are written by other users, so an agent
+	// should treat what these tools return as data, never as instructions.
+	if ( ability.meta.agenticEditor?.untrustedContent ) {
+		hints.untrustedContentHint = true;
+	}
+
+	return hints;
 }
 
 /**
@@ -64,7 +72,7 @@ function formatToolResult( result ) {
  * Surface ability failures as tool errors the agent can read and retry from,
  * rather than rejecting the execute() call.
  *
- * @param {unknown} error
+ * @param {Partial<Error>} error
  * @return {{ content: Array<{ type: string, text: string }>, isError: true }}
  */
 function formatToolError( error ) {
@@ -154,62 +162,32 @@ function toToolOutputSchema( schema ) {
 }
 
 /**
- * @param {unknown} error
+ * @param {unknown} value
+ * @return {value is number} Whether value is a finite number above zero.
+ */
+function isPositiveNumber( value ) {
+	return typeof value === 'number' && Number.isFinite( value ) && value > 0;
+}
+
+/**
+ * @param {Partial<Error>} error
  * @return {boolean}
  */
 function isAlreadyRegisteredError( error ) {
 	if ( error?.name === 'InvalidStateError' ) {
 		return true;
 	}
-	return /already/i.test( String( error?.message || error ) );
-}
-
-/**
- * @return {boolean}
- */
-function isDocumentLoaded() {
-	if ( typeof document === 'undefined' || ! document.readyState ) {
-		return true;
-	}
-	return document.readyState === 'complete';
-}
-
-/**
- * Wait briefly for WebMCP to become available (flag / document ready races).
- * Polling stops shortly after the document finishes loading so browsers without
- * WebMCP do not pay the full timeout on every editor load.
- *
- * @param {number} [timeoutMs]
- * @param {number} [graceAfterLoadMs]
- * @return {Promise<ModelContext|null>}
- */
-async function waitForModelContext( timeoutMs = 3000, graceAfterLoadMs = 500 ) {
-	const started = Date.now();
-	let loadedAt = isDocumentLoaded() ? started : null;
-
-	while ( Date.now() - started < timeoutMs ) {
-		const modelContext = getModelContext();
-		if ( modelContext?.registerTool ) {
-			return modelContext;
-		}
-
-		if ( loadedAt === null && isDocumentLoaded() ) {
-			loadedAt = Date.now();
-		}
-		if ( loadedAt !== null && Date.now() - loadedAt >= graceAfterLoadMs ) {
-			break;
-		}
-
-		await new Promise( ( resolve ) => window.setTimeout( resolve, 50 ) );
-	}
-
-	return getModelContext();
+	// Only a message about the tool itself existing counts; any other
+	// failure that happens to say "already" is a real failure.
+	return /already (been )?(registered|exists)|already a tool/i.test(
+		String( error?.message || error )
+	);
 }
 
 /**
  * Register one ability as a page-lifetime WebMCP tool (no AbortSignal).
  *
- * @param {string} abilityName
+ * @param {string}       abilityName
  * @param {ModelContext} modelContext
  * @return {Promise<boolean>}
  */
@@ -229,7 +207,7 @@ async function registerAbilityAsWebMCPTool( abilityName, modelContext ) {
 				return formatToolResult( result );
 			} catch ( error ) {
 				console.warn(
-					`[contributor-day] Ability failed: ${ abilityName }`,
+					`[agentic-editor] Ability failed: ${ abilityName }`,
 					error
 				);
 				return formatToolError( error );
@@ -247,21 +225,42 @@ async function registerAbilityAsWebMCPTool( abilityName, modelContext ) {
 		optional.annotations = annotations;
 	}
 
+	// Keep the executor around so consumers on this page (the chat panel) can
+	// call the ability without depending on the optional executeTool() API.
+	// The approval reason and timeout are for this page's own consumers only;
+	// they are not WebMCP descriptor keys, so they never reach registerTool.
+	const approval = ability.meta?.agenticEditor?.approval;
+	const timeoutMs = ability.meta?.agenticEditor?.timeoutMs;
+	const remember = () =>
+		rememberLocalTool( {
+			...tool,
+			...optional,
+			...( typeof approval === 'string' ? { approval } : {} ),
+			...( isPositiveNumber( timeoutMs ) ? { timeoutMs } : {} ),
+		} );
+
 	try {
 		await modelContext.registerTool( { ...tool, ...optional } );
 	} catch ( error ) {
+		// Already on the page from an earlier bootstrap: still usable, so
+		// this page's consumers need its executor all the same.
 		if ( isAlreadyRegisteredError( error ) ) {
+			remember();
 			throw error;
 		}
 		// Older WebMCP builds reject descriptor keys they do not know about;
 		// a tool without hints beats no tool at all.
-		await modelContext.registerTool( tool );
+		try {
+			await modelContext.registerTool( tool );
+		} catch ( retryError ) {
+			if ( isAlreadyRegisteredError( retryError ) ) {
+				remember();
+			}
+			throw retryError;
+		}
 	}
 
-	// Keep the executor around so consumers on this page (the chat panel) can
-	// call the ability without depending on the optional executeTool() API.
-	rememberLocalTool( { ...tool, ...optional } );
-
+	remember();
 	return true;
 }
 
@@ -272,7 +271,9 @@ async function registerAbilityAsWebMCPTool( abilityName, modelContext ) {
  * @return {Promise<{ supported: boolean, registered: string[], skipped: string[], errors: Object[] }>}
  */
 export async function bridgeAbilitiesToWebMCP( abilityNames ) {
-	const modelContext = await waitForModelContext();
+	// The polyfill is a classic script, so it has run before any module and
+	// there is nothing to wait for: no model context now means none at all.
+	const modelContext = getModelContext();
 	if ( ! modelContext?.registerTool ) {
 		return {
 			supported: false,
@@ -299,7 +300,7 @@ export async function bridgeAbilitiesToWebMCP( abilityNames ) {
 			}
 
 			console.warn(
-				`[contributor-day] Failed to register WebMCP tool for ${ name }:`,
+				`[agentic-editor] Failed to register WebMCP tool for ${ name }:`,
 				error
 			);
 			skipped.push( name );

@@ -5,15 +5,15 @@
  * The chat is a React app built with Vite (see src/ and vite.config.ts). Two
  * pieces stay outside that bundle and remain hand-written script modules:
  *
- * - `@contributor-day/webmcp-tools`, so the chat and the ability bridge share
+ * - `@agentic-editor/webmcp-tools`, so the chat and the ability bridge share
  *   one tool registry rather than each getting a private copy.
- * - `@contributor-day/chat-config`, so the `script_module_data_` filter below
+ * - `@agentic-editor/chat-config`, so the `script_module_data_` filter below
  *   keeps being the way per-screen configuration reaches the client.
  *
  * The bundle imports both by their import-map IDs, which is why it ships as a
  * script module rather than as a classic script.
  *
- * @package ContributorDay
+ * @package AgenticEditor
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -21,28 +21,26 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Script module ID carrying the chat configuration for the current screen.
  */
-const CONTRIBUTOR_DAY_CHAT_CONFIG_MODULE = '@contributor-day/chat-config';
+const AGENTIC_EDITOR_CHAT_CONFIG_MODULE = '@agentic-editor/chat-config';
 
 /**
  * Directory holding the built chat assets, relative to the plugin root.
  */
-const CONTRIBUTOR_DAY_CHAT_BUILD_DIR = 'build/';
+const AGENTIC_EDITOR_CHAT_BUILD_DIR = 'build/';
 
 /**
  * Register every chat-related script module and style.
  *
- * Registration is separate from enqueueing so both the editor sidebar and the
- * standalone screen can pull in the same graph.
+ * Registration is separate from enqueueing so any screen that mounts the chat
+ * can pull in the same graph.
+ *
+ * @return void
  */
-function contributor_day_register_chat_modules() {
-	if ( ! function_exists( 'wp_register_script_module' ) ) {
-		return;
-	}
-
+function agentic_editor_register_chat_modules() {
 	$modules = array(
-		'@contributor-day/webmcp-polyfill' => array( 'js/webmcp-polyfill.js', array() ),
-		'@contributor-day/webmcp-tools'    => array( 'js/webmcp-tools.js', array( '@contributor-day/webmcp-polyfill' ) ),
-		CONTRIBUTOR_DAY_CHAT_CONFIG_MODULE => array( 'js/chat/config.js', array() ),
+		'@agentic-editor/webmcp-polyfill' => array( 'js/webmcp-polyfill.js', array() ),
+		'@agentic-editor/webmcp-tools'    => array( 'js/webmcp-tools.js', array( '@agentic-editor/webmcp-polyfill' ) ),
+		AGENTIC_EDITOR_CHAT_CONFIG_MODULE => array( 'js/chat/config.js', array() ),
 	);
 
 	foreach ( $modules as $id => $module ) {
@@ -50,18 +48,18 @@ function contributor_day_register_chat_modules() {
 
 		wp_register_script_module(
 			$id,
-			CONTRIBUTOR_DAY_PLUGIN_URL . $path,
+			AGENTIC_EDITOR_PLUGIN_URL . $path,
 			$deps,
-			contributor_day_asset_version( $path )
+			agentic_editor_asset_version( $path )
 		);
 	}
 
 	// The panel's own styles, emitted by the build.
 	wp_register_style(
-		'contributor-day-chat',
-		CONTRIBUTOR_DAY_PLUGIN_URL . CONTRIBUTOR_DAY_CHAT_BUILD_DIR . 'chat.css',
+		'agentic-editor-chat',
+		AGENTIC_EDITOR_PLUGIN_URL . AGENTIC_EDITOR_CHAT_BUILD_DIR . 'chat.css',
 		array(),
-		contributor_day_asset_version( CONTRIBUTOR_DAY_CHAT_BUILD_DIR . 'chat.css' )
+		agentic_editor_asset_version( AGENTIC_EDITOR_CHAT_BUILD_DIR . 'chat.css' )
 	);
 
 	/*
@@ -71,10 +69,10 @@ function contributor_day_register_chat_modules() {
 	 * confined to.
 	 */
 	wp_register_style(
-		'contributor-day-chat-chrome',
-		CONTRIBUTOR_DAY_PLUGIN_URL . 'css/chat-chrome.css',
-		array( 'contributor-day-chat' ),
-		contributor_day_asset_version( 'css/chat-chrome.css' )
+		'agentic-editor-chat-chrome',
+		AGENTIC_EDITOR_PLUGIN_URL . 'css/chat-chrome.css',
+		array( 'agentic-editor-chat' ),
+		agentic_editor_asset_version( 'css/chat-chrome.css' )
 	);
 
 	/*
@@ -85,14 +83,14 @@ function contributor_day_register_chat_modules() {
 	 * exists by the time any module looks for it.
 	 */
 	wp_register_script(
-		'contributor-day-webmcp-polyfill',
-		CONTRIBUTOR_DAY_PLUGIN_URL . 'js/vendor/webmcp-polyfill/webmcp-polyfill.js',
+		'agentic-editor-webmcp-polyfill',
+		AGENTIC_EDITOR_PLUGIN_URL . 'js/vendor/webmcp-polyfill/webmcp-polyfill.js',
 		array(),
-		contributor_day_asset_version( 'js/vendor/webmcp-polyfill/webmcp-polyfill.js' ),
+		agentic_editor_asset_version( 'js/vendor/webmcp-polyfill/webmcp-polyfill.js' ),
 		true
 	);
 }
-add_action( 'init', 'contributor_day_register_chat_modules' );
+add_action( 'init', 'agentic_editor_register_chat_modules' );
 
 /**
  * Configuration handed to the chat modules for the current screen.
@@ -103,30 +101,47 @@ add_action( 'init', 'contributor_day_register_chat_modules' );
  * @param array<string, mixed> $data Existing data.
  * @return array<string, mixed>
  */
-function contributor_day_chat_module_data( $data ) {
+function agentic_editor_chat_module_data( $data ) {
 	return array_merge(
 		is_array( $data ) ? $data : array(),
 		array(
-			'restUrl'       => rest_url( CONTRIBUTOR_DAY_CHAT_NAMESPACE . '/chat' ),
+			'restUrl'       => rest_url( AGENTIC_EDITOR_CHAT_NAMESPACE . '/chat' ),
 			'nonce'         => wp_create_nonce( 'wp_rest' ),
-			'available'     => contributor_day_chat_is_available(),
-			'connectorsUrl' => current_user_can( 'manage_options' )
-				? admin_url( 'options-connectors.php' )
-				: null,
-			'maxToolRounds' => (int) apply_filters( 'contributor_day_chat_max_tool_rounds', 8 ),
+			// Core's endpoint for renewing the nonce in a tab left open past its lifetime.
+			'nonceUrl'      => admin_url( 'admin-ajax.php?action=rest-nonce' ),
+			'available'     => agentic_editor_chat_is_available(),
+			'connectorsUrl' => agentic_editor_chat_connectors_url(),
+			'maxToolRounds' => agentic_editor_chat_max_tool_rounds(),
 			'siteName'      => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 		)
 	);
 }
-add_filter( 'script_module_data_' . CONTRIBUTOR_DAY_CHAT_CONFIG_MODULE, 'contributor_day_chat_module_data' );
+add_filter( 'script_module_data_' . AGENTIC_EDITOR_CHAT_CONFIG_MODULE, 'agentic_editor_chat_module_data' );
 
 /**
- * Whether the chat bundle has been built.
+ * Files the chat needs from the build, relative to the build directory.
+ *
+ * @return string[]
+ */
+function agentic_editor_chat_build_files() {
+	return array( 'chat.css', 'chat-editor-sidebar.js' );
+}
+
+/**
+ * Whether every file the chat loads has been built.
+ *
+ * A partial build (an interrupted `npm run dev`, say) counts as not built, so
+ * the notice explains the missing panel instead of nothing showing at all.
  *
  * @return bool
  */
-function contributor_day_chat_is_built() {
-	return file_exists( CONTRIBUTOR_DAY_PLUGIN_DIR . CONTRIBUTOR_DAY_CHAT_BUILD_DIR . 'chat.css' );
+function agentic_editor_chat_is_built() {
+	foreach ( agentic_editor_chat_build_files() as $file ) {
+		if ( ! file_exists( AGENTIC_EDITOR_PLUGIN_DIR . AGENTIC_EDITOR_CHAT_BUILD_DIR . $file ) ) {
+			return false;
+		}
+	}
+	return true;
 }
 
 /**
@@ -135,20 +150,17 @@ function contributor_day_chat_is_built() {
  * @param string   $module_id  Script module ID to register the mount under.
  * @param string   $build_file Built entry file name, relative to the build directory.
  * @param string[] $extra_deps Additional script module dependencies.
+ * @return bool Whether the chat was enqueued; false for users who cannot chat or when there is no build.
  */
-function contributor_day_enqueue_chat( $module_id, $build_file, array $extra_deps = array() ) {
-	if ( ! function_exists( 'wp_enqueue_script_module' ) || ! contributor_day_user_can_chat() ) {
-		return;
+function agentic_editor_enqueue_chat( $module_id, $build_file, array $extra_deps = array() ) {
+	if ( ! agentic_editor_user_can_chat() || ! agentic_editor_chat_is_built() ) {
+		return false;
 	}
 
-	$path = CONTRIBUTOR_DAY_CHAT_BUILD_DIR . $build_file;
+	$path = AGENTIC_EDITOR_CHAT_BUILD_DIR . $build_file;
 
-	if ( ! file_exists( CONTRIBUTOR_DAY_PLUGIN_DIR . $path ) ) {
-		return;
-	}
-
-	wp_enqueue_style( 'contributor-day-chat-chrome' );
-	wp_enqueue_script( 'contributor-day-webmcp-polyfill' );
+	wp_enqueue_style( 'agentic-editor-chat-chrome' );
+	wp_enqueue_script( 'agentic-editor-webmcp-polyfill' );
 
 	/*
 	 * React comes from WordPress rather than from the bundle. Core asks plugins
@@ -163,16 +175,18 @@ function contributor_day_enqueue_chat( $module_id, $build_file, array $extra_dep
 
 	wp_enqueue_script_module(
 		$module_id,
-		CONTRIBUTOR_DAY_PLUGIN_URL . $path,
+		AGENTIC_EDITOR_PLUGIN_URL . $path,
 		array_merge(
 			array(
-				'@contributor-day/webmcp-tools',
-				CONTRIBUTOR_DAY_CHAT_CONFIG_MODULE,
+				'@agentic-editor/webmcp-tools',
+				AGENTIC_EDITOR_CHAT_CONFIG_MODULE,
 			),
 			$extra_deps
 		),
-		contributor_day_asset_version( $path )
+		agentic_editor_asset_version( $path )
 	);
+
+	return true;
 }
 
 /**
@@ -180,15 +194,17 @@ function contributor_day_enqueue_chat( $module_id, $build_file, array $extra_dep
  *
  * The panel is compiled from src/, so a fresh checkout has no assets to load
  * and would otherwise just show nothing.
+ *
+ * @return void
  */
-function contributor_day_chat_build_notice() {
-	if ( ! current_user_can( 'manage_options' ) || contributor_day_chat_is_built() ) {
+function agentic_editor_chat_build_notice() {
+	if ( ! current_user_can( 'manage_options' ) || agentic_editor_chat_is_built() ) {
 		return;
 	}
 
 	wp_admin_notice(
-		esc_html__( 'Contributor Day: the chat panel has not been built yet. Run "npm install && npm run build" in the plugin directory.', 'contributor-day' ),
+		esc_html__( 'Agentic Editor: the chat panel has not been built yet. Run "npm install && npm run build" in the plugin directory.', 'agentic-editor' ),
 		array( 'type' => 'warning' )
 	);
 }
-add_action( 'admin_notices', 'contributor_day_chat_build_notice' );
+add_action( 'admin_notices', 'agentic_editor_chat_build_notice' );

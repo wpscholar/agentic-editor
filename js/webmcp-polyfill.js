@@ -25,28 +25,3 @@ export function getModelContext() {
 	}
 	return null;
 }
-
-let warned = false;
-
-/**
- * @return {{ available: boolean, polyfillLoaded: boolean, secureContext: boolean }}
- */
-export function getWebMCPStatus() {
-	const secureContext =
-		typeof window !== 'undefined' ? window.isSecureContext !== false : false;
-	const available = !! getModelContext()?.registerTool;
-
-	if ( ! available && ! secureContext && ! warned ) {
-		warned = true;
-		console.warn(
-			'[contributor-day] WebMCP is unavailable because this page is not a secure context. Serve the site over HTTPS or from localhost.'
-		);
-	}
-
-	return {
-		available,
-		polyfillLoaded:
-			typeof window !== 'undefined' && !! window.WebMCPPolyfill,
-		secureContext,
-	};
-}

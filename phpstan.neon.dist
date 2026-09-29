@@ -1,0 +1,15 @@
+includes:
+	- vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+	level: 8
+	phpVersion: 80000
+	paths:
+		- agentic-editor.php
+		- includes
+	bootstrapFiles:
+		- tests/phpstan/bootstrap.php
+	# Docblocks describe what should arrive, but filtered values and client
+	# JSON can be anything at runtime, and the AI Client differs between
+	# WordPress releases. The defensive checks for that are intentional.
+	treatPhpDocTypesAsCertain: false

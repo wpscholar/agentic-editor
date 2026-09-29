@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ruleset name="Agentic Editor">
+	<description>WordPress Coding Standards, checked against the plugin's PHP 8.0 floor.</description>
+
+	<file>agentic-editor.php</file>
+	<file>includes</file>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<rule ref="WordPress"/>
+
+	<rule ref="PHPCompatibilityWP"/>
+	<config name="testVersion" value="8.0-"/>
+	<config name="minimum_wp_version" value="7.0"/>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="agentic-editor"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="agentic_editor"/>
+				<element value="AGENTIC_EDITOR"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

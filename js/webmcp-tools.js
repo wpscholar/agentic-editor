@@ -13,12 +13,12 @@
  * page that loads this module gets a working tool layer.
  */
 
-import { getModelContext } from '@contributor-day/webmcp-polyfill';
+import { getModelContext } from '@agentic-editor/webmcp-polyfill';
 
 /** @type {Map<string, Object>} */
 const localTools = new Map();
 
-/** @type {Set<Function>} */
+/** @type {Set<() => void>} */
 const changeListeners = new Set();
 
 let listeningForToolChange = false;
@@ -26,12 +26,14 @@ let listeningForToolChange = false;
 /**
  * Record a tool this page registered, along with the function that runs it.
  *
- * @param {Object}   descriptor             Tool descriptor as passed to registerTool.
- * @param {string}   descriptor.name        Tool name.
- * @param {string}   [descriptor.description]
- * @param {Object}   [descriptor.inputSchema]
- * @param {Object}   [descriptor.annotations]
- * @param {Function} descriptor.execute     Executor.
+ * @param {Object}                             descriptor               Tool descriptor as passed to registerTool.
+ * @param {string}                             descriptor.name          Tool name.
+ * @param {string}                             [descriptor.description]
+ * @param {Object}                             [descriptor.inputSchema]
+ * @param {Object}                             [descriptor.annotations]
+ * @param {string}                             [descriptor.approval]    Why a person must approve each call.
+ * @param {number}                             [descriptor.timeoutMs]   How long a consumer should wait for a call.
+ * @param {(input: Object) => Promise<Object>} descriptor.execute       Executor.
  */
 export function rememberLocalTool( descriptor ) {
 	if ( ! descriptor?.name || typeof descriptor.execute !== 'function' ) {
@@ -44,8 +46,8 @@ export function rememberLocalTool( descriptor ) {
 /**
  * Subscribe to tool set changes.
  *
- * @param {Function} listener Called with no arguments when the tool set changes.
- * @return {Function} Unsubscribe.
+ * @param {() => void} listener Called with no arguments when the tool set changes.
+ * @return {() => void} Unsubscribe.
  */
 export function onToolsChanged( listener ) {
 	changeListeners.add( listener );
@@ -58,7 +60,10 @@ function notifyToolsChanged() {
 		try {
 			listener();
 		} catch ( error ) {
-			console.warn( '[contributor-day] Tool change listener failed:', error );
+			console.warn(
+				'[agentic-editor] Tool change listener failed:',
+				error
+			);
 		}
 	}
 }
@@ -89,7 +94,7 @@ function parseInputSchema( inputSchema ) {
 		return inputSchema;
 	}
 	try {
-		const parsed = JSON.parse( inputSchema );
+		const parsed = JSON.parse( String( inputSchema ) );
 		return parsed && typeof parsed === 'object' ? parsed : undefined;
 	} catch {
 		return undefined;
@@ -99,16 +104,34 @@ function parseInputSchema( inputSchema ) {
 /**
  * @param {Object} tool
  * @param {string} source
- * @return {{ name: string, description: string, inputSchema: Object|undefined, annotations: Object|undefined, source: string }}
+ * @return {{ name: string, description: string, inputSchema: Object|undefined, annotations: Object|undefined, source: string, approval?: string, timeoutMs?: number }}
  */
 function normalizeTool( tool, source ) {
-	return {
+	const normalized = {
 		name: tool.name,
 		description: tool.description || tool.title || tool.name,
 		inputSchema: parseInputSchema( tool.inputSchema ),
 		annotations: tool.annotations,
 		source,
 	};
+
+	// Only this page's own tools may say why they need approval; a tool from
+	// another script is never taken at its word.
+	if ( source === 'local' && typeof tool.approval === 'string' ) {
+		normalized.approval = tool.approval;
+	}
+
+	// Likewise only this page's own tools may ask to be waited on for longer.
+	if (
+		source === 'local' &&
+		typeof tool.timeoutMs === 'number' &&
+		Number.isFinite( tool.timeoutMs ) &&
+		tool.timeoutMs > 0
+	) {
+		normalized.timeoutMs = tool.timeoutMs;
+	}
+
+	return normalized;
 }
 
 /**
@@ -135,7 +158,10 @@ export async function listTools() {
 				}
 			}
 		} catch ( error ) {
-			console.warn( '[contributor-day] Could not list WebMCP tools:', error );
+			console.warn(
+				'[agentic-editor] Could not list WebMCP tools:',
+				error
+			);
 		}
 	}
 
@@ -159,7 +185,12 @@ function normalizeToolResult( raw ) {
 		return { isError: false, value: null, text: '' };
 	}
 
-	if ( typeof raw !== 'object' || ! Array.isArray( raw.content ) ) {
+	const result =
+		/** @type {{ content?: unknown, isError?: boolean, structuredContent?: unknown }} */ (
+			raw
+		);
+
+	if ( typeof raw !== 'object' || ! Array.isArray( result.content ) ) {
 		return {
 			isError: false,
 			value: raw,
@@ -167,14 +198,24 @@ function normalizeToolResult( raw ) {
 		};
 	}
 
-	const text = raw.content
-		.filter( ( block ) => block?.type === 'text' )
-		.map( ( block ) => block.text )
-		.join( '\n' );
+	const textBlocks = result.content.filter(
+		( block ) => block?.type === 'text'
+	);
+	const text = textBlocks.map( ( block ) => block.text ).join( '\n' );
+
+	let value = result.structuredContent;
+	if ( value === undefined ) {
+		/*
+		 * structuredContent can only be an object, so a tool returning an
+		 * array or a number sends it as JSON text. Parse it back, so the model
+		 * gets the same structured value an object result would.
+		 */
+		value = textBlocks.length === 1 ? parseMaybeJson( text ) : text;
+	}
 
 	return {
-		isError: !! raw.isError,
-		value: raw.structuredContent !== undefined ? raw.structuredContent : text,
+		isError: !! result.isError,
+		value,
 		text,
 	};
 }
@@ -192,6 +233,31 @@ async function findRemoteTool( name ) {
 	}
 	const tools = await modelContext.getTools();
 	return ( tools || [] ).find( ( tool ) => tool?.name === name ) || null;
+}
+
+/**
+ * Whether the page is known not to have a tool, from whichever listing the
+ * browser offers. False when there is no way to tell.
+ *
+ * @param {string} name
+ * @return {Promise<boolean>}
+ */
+async function isKnownMissing( name ) {
+	const modelContext = getModelContext();
+	const testing =
+		typeof navigator !== 'undefined' ? navigator.modelContextTesting : null;
+
+	let tools = null;
+	if ( typeof modelContext?.getTools === 'function' ) {
+		tools = await modelContext.getTools();
+	} else if ( typeof testing?.listTools === 'function' ) {
+		tools = await testing.listTools();
+	}
+
+	return (
+		Array.isArray( tools ) &&
+		! tools.some( ( tool ) => tool?.name === name )
+	);
 }
 
 /**
@@ -214,9 +280,14 @@ export async function callTool( name, args = {} ) {
 		}
 	}
 
-	const modelContext = getModelContext();
-
 	try {
+		// A name the model made up is reported as such, whatever this
+		// browser can or cannot execute.
+		if ( await isKnownMissing( name ) ) {
+			return toolFailure( new Error( `Unknown tool: ${ name }` ) );
+		}
+
+		const modelContext = getModelContext();
 		if ( typeof modelContext?.executeTool === 'function' ) {
 			const tool = await findRemoteTool( name );
 			if ( ! tool ) {
@@ -267,7 +338,7 @@ function parseMaybeJson( value ) {
 }
 
 /**
- * @param {unknown} error
+ * @param {Partial<Error>} error
  * @return {{ isError: true, value: { error: string }, text: string }}
  */
 function toolFailure( error ) {

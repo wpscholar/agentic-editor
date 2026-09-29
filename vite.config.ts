@@ -49,12 +49,11 @@ export default defineConfig( ( { mode } ) => ( {
 			 * feeds it working untouched.
 			 */
 			external: [
-				'@contributor-day/webmcp-tools',
-				'@contributor-day/chat-config',
+				'@agentic-editor/webmcp-tools',
+				'@agentic-editor/chat-config',
 			],
 			input: {
 				'chat-editor-sidebar': src( 'entries/editor-sidebar.tsx' ),
-				'chat-standalone': src( 'entries/standalone.tsx' ),
 			},
 			output: {
 				format: 'es',
