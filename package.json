@@ -41,10 +41,10 @@
     "typescript": "~6.0.3",
     "typescript-native": "npm:typescript@^7.0.2",
     "vite": "^8.3.1",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.2"
   },
   "dependencies": {
-    "@ai-sdk/react": "^4.0.117",
+    "@ai-sdk/react": "^4.0.119",
     "ai": "^7.0.114",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
