@@ -448,6 +448,36 @@ test.describe( 'block attachment', () => {
 		expect( bodies[ 2 ].context.attachedBlock ).toBeUndefined();
 	} );
 
+	test( 'a long attachment label is truncated inside the panel', async ( {
+		page,
+	} ) => {
+		await pretendConnector( page );
+		await openEditor( page );
+		const clientId = await page.evaluate( () => {
+			const { dispatch } = ( window as any ).wp.data;
+			const block = ( window as any ).wp.blocks.createBlock(
+				'core/paragraph',
+				{ content: 'A paragraph long enough to overflow. '.repeat( 8 ) }
+			);
+			dispatch( 'core/block-editor' ).insertBlocks( [ block ] );
+			return block.clientId;
+		} );
+		const panel = await openSidebar( page );
+		await selectBlock( page, clientId );
+		await panel.getByRole( 'button', { name: 'Attach a block' } ).click();
+
+		// The chip ends, remove button and all, inside the composer.
+		const remove = panel.getByRole( 'button', {
+			name: 'Remove attached block',
+		} );
+		await expect( remove ).toBeVisible();
+		const composer = await panel.locator( 'form' ).boundingBox();
+		const button = await remove.boundingBox();
+		expect( button!.x + button!.width ).toBeLessThanOrEqual(
+			composer!.x + composer!.width
+		);
+	} );
+
 	test( 'the paperclip waits for a block when none is selected', async ( {
 		page,
 	} ) => {

@@ -583,7 +583,7 @@ function AttachmentChip( {
 	onClear?: () => void;
 } ) {
 	return (
-		<div className="flex min-w-0 items-center gap-1.5 self-start rounded-md border border-border bg-muted py-0.5 pr-0.5 pl-2 text-xs text-muted-foreground">
+		<div className="flex max-w-full min-w-0 items-center gap-1.5 self-start rounded-md border border-border bg-muted py-0.5 pr-0.5 pl-2 text-xs text-muted-foreground">
 			<PaperclipIcon className="size-3 shrink-0" />
 			<span className="shrink-0 font-medium text-foreground">
 				Attached
