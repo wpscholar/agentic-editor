@@ -98,7 +98,7 @@
 .walk .steps { gap: 18px; }
 .walk .steps li > div { display: grid; gap: 4px; }
 .walk .steps li > div > span { color: var(--muted); font-size: 15px; }
-.walk .steps li.hot::before { background: var(--brand); border-color: var(--brand); color: #fff; }
+.walk .steps li::before { background: var(--brand); border-color: var(--brand); color: #fff; }
 .walk .mocks { display: grid; gap: 16px; position: sticky; top: 24px; min-width: 0; }
 .walk.wide { grid-template-columns: minmax(0, 1fr); gap: 28px; }
 .walk.wide .mocks { position: static; max-width: 720px; }
@@ -180,9 +180,9 @@
 /* ---------- costs ---------- */
 .limits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; max-width: 900px; }
 .limits div { border-top: 1px solid var(--line); padding: 12px 0; display: grid; gap: 2px; }
-.limits b { font-size: 15px; display: flex; align-items: center; gap: 8px; }
-.limits b i { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); }
-.limits span { color: var(--muted); font-size: 14.5px; }
+.limits div > b { font-size: 15px; display: flex; align-items: center; gap: 8px; }
+.limits div > b i { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); }
+.limits div > span { color: var(--muted); font-size: 14.5px; }
 
 .tbl small.by { color: var(--muted); font-size: 12.5px; }
 .tbl .dotname { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
