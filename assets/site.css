@@ -134,16 +134,17 @@ img { max-width: 100%; }
 
 /* ---------- landing page ---------- */
 .landing { max-width: 1120px; margin: 0 auto; padding-bottom: 72px; }
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 56px; align-items: center; padding-block: 64px; }
-.hero-copy { display: grid; gap: 20px; }
+.hero { display: grid; gap: 48px; padding-block: 64px; }
+.hero-copy { display: grid; gap: 20px; justify-items: center; text-align: center; max-width: 760px; margin: 0 auto; }
+.hero-copy .ctas, .hero-copy .meta { justify-content: center; }
 .hero h1 { font-size: clamp(38px, 5.4vw, 56px); }
-.hero .lede { font-size: 19px; color: var(--muted); margin: 0; max-width: 520px; }
+.hero .lede { font-size: 19px; color: var(--muted); margin: 0; max-width: 640px; }
 .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
 .meta li { display: flex; align-items: center; gap: 6px; }
 .meta svg { color: var(--ok); }
-.hero .mock { transform: rotate(-.4deg); }
-.hero .editor { grid-template-columns: minmax(0, 1fr) 280px; min-height: 380px; }
+.hero-shot { margin: 0; }
+.hero-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow); background: #fff; }
 
 .band { padding-block: 56px; border-top: 1px solid var(--line); display: grid; gap: 28px; }
 .band-head { display: grid; gap: 10px; max-width: 680px; }
@@ -182,7 +183,7 @@ pre.cmd { margin: 0; font-family: var(--mono); font-size: 13.5px; background: va
 .cta-band .ctas { justify-content: center; }
 
 @media (max-width: 960px) {
-  .hero { grid-template-columns: minmax(0, 1fr); gap: 40px; padding-block: 40px; }
+  .hero { gap: 32px; padding-block: 40px; }
   .features { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
@@ -191,7 +192,5 @@ pre.cmd { margin: 0; font-family: var(--mono); font-size: 13.5px; background: va
   .site-nav { gap: 0; font-size: 14px; }
   .site-nav a { padding: 6px 7px; }
   .trust { grid-template-columns: minmax(0, 1fr); }
-  .hero .editor { grid-template-columns: minmax(0, 1fr); }
-  .hero .canvas { display: none; }
   details.install summary small { display: none; }
 }
