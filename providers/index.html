@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Connect an AI Provider</title>
+<meta name="description" content="Step-by-step setup for Google Gemini, OpenAI, Anthropic, OpenRouter and Mistral: create an API key, then paste it into WordPress under Settings → Connectors.">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/guide.css">
+<link rel="stylesheet" href="../assets/providers.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M18 5l2 2"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8c-2-4-6-4-6-1s6 1 6 1 6 2 6-1-4-3-6 1"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-head">
+  <a class="brand" href="../"><span class="mark"><svg class="i"><use href="#i-chat"/></svg></span>Agentic Editor</a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="../">Home</a>
+    <a href="../guide/">User guide</a>
+    <a href="./" aria-current="page">AI providers</a>
+    <a href="https://github.com/wpscholar/agentic-editor">GitHub</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Contents">
+    <div class="eyebrow">Contents</div>
+    <ol>
+      <li><a href="#how">How it fits together</a></li>
+      <li><a href="#choose">Choose a provider</a></li>
+      <li><a href="#google">Google Gemini</a></li>
+      <li><a href="#openai">OpenAI</a></li>
+      <li><a href="#anthropic">Anthropic</a></li>
+      <li><a href="#openrouter">OpenRouter</a></li>
+      <li><a href="#mistral">Mistral</a></li>
+      <li><a href="#wordpress">Add the key to WordPress</a></li>
+      <li><a href="#costs">Keep costs in check</a></li>
+      <li><a href="#trouble">When it doesn't work</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="intro">
+      <div class="eyebrow">Agentic Editor · Setup</div>
+      <h1>Connect an AI provider</h1>
+      <p class="lede">AI Chat needs an AI provider to think with. You create a key on the provider's website, paste it into WordPress once, and you're done. This page walks through it click by click for each provider.</p>
+      <ul class="prereq">
+        <li><svg class="i"><use href="#i-checkc"/></svg>WordPress 7.0 or later</li>
+        <li><svg class="i"><use href="#i-checkc"/></svg>An administrator account</li>
+        <li><svg class="i"><use href="#i-clock"/></svg>About 5 minutes</li>
+      </ul>
+    </header>
+
+    <section id="how">
+      <h2><span class="n">1</span>How it fits together</h2>
+      <p>An <b>API key</b> is a long password that lets your site use a provider's AI on your behalf. The provider bills (or counts free usage) against the account that made the key.</p>
+      <div class="big-picture">
+        <div class="bp">
+          <span class="ic"><svg class="i"><use href="#i-key"/></svg></span>
+          <b>Create a key</b>
+          <span class="where">On the provider's website</span>
+          <p>Sign up, add credit if the provider needs it, and create an API key.</p>
+        </div>
+        <div class="bp">
+          <span class="ic"><svg class="i"><use href="#i-plug"/></svg></span>
+          <b>Paste it into WordPress</b>
+          <span class="where">Settings → Connectors</span>
+          <p>Save the key once. Every plugin that uses WordPress's AI features can share it.</p>
+        </div>
+        <div class="bp">
+          <span class="ic"><svg class="i"><use href="#i-chat"/></svg></span>
+          <b>Start chatting</b>
+          <span class="where">Block editor → AI Chat</span>
+          <p>Open any post and ask AI Chat for a change. There's nothing to set up in the plugin itself.</p>
+        </div>
+      </div>
+      <p class="note">Treat the key like a password. Anyone who has it can spend your credit. Only paste it into your own site, and never into an email, chat or support forum.</p>
+    </section>
+
+    <section id="choose">
+      <h2><span class="n">2</span>Choose a provider</h2>
+      <p>Any one of these is enough. If you're not sure, start with <b>Google Gemini</b>: it takes the fewest steps and needs no credit card.</p>
+
+      <div class="picker">
+        <a class="pick-card" href="#google" style="--brand:#1a73e8">
+          <span class="rec">Easiest</span>
+          <span class="nm">Google Gemini</span>
+          <span class="sub">Sign in with Google</span>
+          <dl>
+            <div><dt>Ease</dt><dd><span class="ease" data-n="5" aria-label="5 of 5"><i></i><i></i><i></i><i></i><i></i></span></dd></div>
+            <div><dt>Card</dt><dd class="yes">Not needed</dd></div>
+            <div><dt>Time</dt><dd>~2 min</dd></div>
+            <div><dt>WordPress</dt><dd class="yes">One-click</dd></div>
+          </dl>
+          <span class="go">See the steps<svg class="i"><use href="#i-chev"/></svg></span>
+        </a>
+        <a class="pick-card" href="#openai" style="--brand:#10a37f">
+          <span class="nm">OpenAI</span>
+          <span class="sub">Maker of ChatGPT</span>
+          <dl>
+            <div><dt>Ease</dt><dd><span class="ease" data-n="3" aria-label="3 of 5"><i></i><i></i><i></i><i></i><i></i></span></dd></div>
+            <div><dt>Card</dt><dd class="no">$5 min.</dd></div>
+            <div><dt>Time</dt><dd>~5 min</dd></div>
+            <div><dt>WordPress</dt><dd class="yes">One-click</dd></div>
+          </dl>
+          <span class="go">See the steps<svg class="i"><use href="#i-chev"/></svg></span>
+        </a>
+        <a class="pick-card" href="#anthropic" style="--brand:#d97757">
+          <span class="nm">Anthropic</span>
+          <span class="sub">Maker of Claude</span>
+          <dl>
+            <div><dt>Ease</dt><dd><span class="ease" data-n="2" aria-label="2 of 5"><i></i><i></i><i></i><i></i><i></i></span></dd></div>
+            <div><dt>Card</dt><dd class="no">Prepaid</dd></div>
+            <div><dt>Time</dt><dd>~6 min</dd></div>
+            <div><dt>WordPress</dt><dd class="yes">One-click</dd></div>
+          </dl>
+          <span class="go">See the steps<svg class="i"><use href="#i-chev"/></svg></span>
+        </a>
+        <a class="pick-card" href="#openrouter" style="--brand:#6467f2">
+          <span class="nm">OpenRouter</span>
+          <span class="sub">Many models, one key</span>
+          <dl>
+            <div><dt>Ease</dt><dd><span class="ease" data-n="4" aria-label="4 of 5"><i></i><i></i><i></i><i></i><i></i></span></dd></div>
+            <div><dt>Card</dt><dd class="yes">Not needed</dd></div>
+            <div><dt>Time</dt><dd>~3 min</dd></div>
+            <div><dt>WordPress</dt><dd>Community</dd></div>
+          </dl>
+          <span class="go">See the steps<svg class="i"><use href="#i-chev"/></svg></span>
+        </a>
+        <a class="pick-card" href="#mistral" style="--brand:#fa520f">
+          <span class="nm">Mistral</span>
+          <span class="sub">French AI lab</span>
+          <dl>
+            <div><dt>Ease</dt><dd><span class="ease" data-n="4" aria-label="4 of 5"><i></i><i></i><i></i><i></i><i></i></span></dd></div>
+            <div><dt>Card</dt><dd class="yes">Not needed</dd></div>
+            <div><dt>Time</dt><dd>~5 min</dd></div>
+            <div><dt>WordPress</dt><dd>Community</dd></div>
+          </dl>
+          <span class="go">See the steps<svg class="i"><use href="#i-chev"/></svg></span>
+        </a>
+      </div>
+
+      <div class="heads-up" role="note">
+        <span class="ic"><svg class="i"><use href="#i-alert"/></svg></span>
+        <div>
+          <p><b>A ChatGPT, Claude or Gemini subscription is not the same as API access.</b></p>
+          <p>Paying $20 a month for ChatGPT Plus or Claude Pro doesn't give your website any credit. The API is billed separately, on the provider's developer site, even if you sign in with the same account.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ GOOGLE ============ -->
+    <section id="google" class="prov" style="--brand:#1a73e8">
+      <h2><span class="n">3</span><span class="swatch"></span>Google Gemini</h2>
+      <ul class="badges">
+        <li class="good"><svg class="i"><use href="#i-gift"/></svg>Free tier</li>
+        <li class="good"><svg class="i"><use href="#i-card"/></svg>No card needed</li>
+        <li><svg class="i"><use href="#i-clock"/></svg>About 2 minutes</li>
+        <li><svg class="i"><use href="#i-image"/></svg>Can generate images</li>
+      </ul>
+      <ol class="journey" aria-label="The whole path">
+        <li>Sign in with Google</li><li>Create API key</li><li>Copy</li><li class="wp">Install &amp; paste in WordPress</li>
+      </ol>
+
+      <div class="walk">
+        <ol class="steps">
+          <li><div><b>Open Google AI Studio.</b><span>Go to <a class="url" href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> and sign in with any Google account, such as your Gmail.</span></div></li>
+          <li><div><b>Accept the terms.</b><span>The first time, Google asks you to agree to its terms of service. Tick the boxes and continue.</span></div></li>
+          <li class="hot"><div><b>Click <span class="btnname">Create API key</span>.</b><span>Google may already have made one for you. If a key is listed, you can use that one.</span></div></li>
+          <li class="hot"><div><b>Copy the key.</b><span>Click the copy button next to it. Keep this tab open until you've pasted it into WordPress.</span></div></li>
+          <li><div><b>Connect it in WordPress.</b><span>Under <b>Settings → Connectors</b>, click <b>Install</b> next to Google, then paste the key. This installs the official <a href="https://wordpress.org/plugins/ai-provider-for-google/">AI Provider for Google</a> plugin. <a href="#wordpress">See how</a>.</span></div></li>
+        </ol>
+        <div class="mocks">
+          <figure>
+            <div class="browser" role="img" aria-label="Illustration: the API keys page in Google AI Studio with the Create API key button highlighted and one key listed with a copy button.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">aistudio.google.com/apikey</span></div>
+              <div class="pane">
+                <div class="ttl">API keys <span class="fbtn hl"><svg class="i"><use href="#i-plus"/></svg>Create API key</span></div>
+                <div class="muted">Keys let you use Gemini from other apps.</div>
+                <div class="keyrow"><code>••••••••••••••••••••Xa9Q</code><span class="fbtn ghost"><svg class="i"><use href="#i-copy"/></svg>Copy</span></div>
+                <div class="listrow"><span>Default Gemini project</span><span class="muted">Free tier</span></div>
+              </div>
+            </div>
+            <figcaption>Illustration. The page may look a little different for you, but the button names are the same.</figcaption>
+          </figure>
+        </div>
+      </div>
+      <p class="note">On the free tier Google may use what you send to improve its products, and there are daily usage limits. For client sites, or for heavier use, set up billing in AI Studio to move to the paid tier, which lifts the limits and keeps your content out of Google's training.</p>
+    </section>
+
+    <!-- ============ OPENAI ============ -->
+    <section id="openai" class="prov" style="--brand:#10a37f">
+      <h2><span class="n">4</span><span class="swatch"></span>OpenAI</h2>
+      <ul class="badges">
+        <li class="cost"><svg class="i"><use href="#i-card"/></svg>Card and $5 minimum</li>
+        <li><svg class="i"><use href="#i-clock"/></svg>About 5 minutes</li>
+        <li><svg class="i"><use href="#i-image"/></svg>Can generate images</li>
+      </ul>
+      <ol class="journey" aria-label="The whole path">
+        <li>Sign up</li><li class="money">Add $5 credit</li><li>Create secret key</li><li>Copy</li><li class="wp">Install &amp; paste in WordPress</li>
+      </ol>
+
+      <div class="walk">
+        <ol class="steps">
+          <li><div><b>Open the OpenAI Platform.</b><span>Go to <a class="url" href="https://platform.openai.com/">platform.openai.com</a> and sign up or log in. Your ChatGPT login works here, but the billing is separate.</span></div></li>
+          <li class="hot"><div><b>Add credit.</b><span>Open <b>Settings → Billing</b>, click <span class="btnname">Add payment details</span>, enter a card and buy credit. The minimum is $5, which covers a lot of chatting.</span></div></li>
+          <li><div><b>Decide on auto recharge.</b><span>OpenAI offers to top up automatically when credit runs low. Leave it off if you'd rather have a hard ceiling on spending.</span></div></li>
+          <li class="hot"><div><b>Create a key.</b><span>Go to <a class="url" href="https://platform.openai.com/api-keys">platform.openai.com/api-keys</a>, click <span class="btnname">Create new secret key</span>, name it after your site, and click <span class="btnname">Create secret key</span>.</span></div></li>
+          <li class="hot"><div><b>Copy it now.</b><span>The key starts with <code>sk-</code> and is shown only once. If you close the window first, just delete it and make another.</span></div></li>
+          <li><div><b>Connect it in WordPress.</b><span>Under <b>Settings → Connectors</b>, click <b>Install</b> next to OpenAI, then paste the key. This installs the official <a href="https://wordpress.org/plugins/ai-provider-for-openai/">AI Provider for OpenAI</a> plugin. <a href="#wordpress">See how</a>.</span></div></li>
+        </ol>
+        <div class="mocks">
+          <figure>
+            <div class="browser" role="img" aria-label="Illustration: OpenAI billing page with $5, $10 and $20 credit amounts, $5 selected, and auto recharge switched off.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">platform.openai.com/settings/…/billing</span></div>
+              <div class="pane">
+                <div class="ttl">Add to credit balance</div>
+                <div class="amounts"><span class="on">$5</span><span>$10</span><span>$20</span></div>
+                <div class="toggle">Automatic recharge <span class="sw"></span></div>
+                <span class="fbtn hl">Continue</span>
+              </div>
+            </div>
+            <figcaption>Step 2: buy a small amount of credit first. Keys won't answer until there's a balance.</figcaption>
+          </figure>
+          <figure>
+            <div class="browser" role="img" aria-label="Illustration: the new secret key dialog showing a key starting with sk- and a Copy button, with a warning that it won't be shown again.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">platform.openai.com/api-keys</span></div>
+              <div class="pane">
+                <div class="ttl">Save your key</div>
+                <div class="keyrow"><code>sk-proj-4fG7••••••••••••••••••••</code><span class="fbtn hl"><svg class="i"><use href="#i-copy"/></svg>Copy</span></div>
+                <div class="warnline"><svg class="i"><use href="#i-alert"/></svg>You won't be able to view it again.</div>
+              </div>
+            </div>
+            <figcaption>Step 5: copy before you click Done.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ANTHROPIC ============ -->
+    <section id="anthropic" class="prov" style="--brand:#d97757">
+      <h2><span class="n">5</span><span class="swatch"></span>Anthropic (Claude)</h2>
+      <ul class="badges">
+        <li class="cost"><svg class="i"><use href="#i-card"/></svg>Prepaid credit required</li>
+        <li><svg class="i"><use href="#i-clock"/></svg>About 6 minutes</li>
+      </ul>
+      <ol class="journey" aria-label="The whole path">
+        <li>Sign up</li><li>Name your organization</li><li class="money">Buy credits</li><li>Create key</li><li>Copy</li><li class="wp">Install &amp; paste in WordPress</li>
+      </ol>
+
+      <div class="walk">
+        <ol class="steps">
+          <li><div><b>Open the Claude Console.</b><span>Go to <a class="url" href="https://platform.claude.com/">platform.claude.com</a> and sign up. This is the developer side of Claude, separate from a Claude.ai subscription.</span></div></li>
+          <li><div><b>Answer the welcome questions.</b><span>You'll be asked for an organization name and how you plan to use the API. Your business or site name is fine, and “Just me” is a fine answer.</span></div></li>
+          <li class="hot"><div><b>Buy credits.</b><span>Open <a class="url" href="https://platform.claude.com/settings/billing">Settings → Billing</a>, add a card and buy a small amount of credit. Keys won't work until there's a balance.</span></div></li>
+          <li class="hot"><div><b>Create a key.</b><span>Open <a class="url" href="https://platform.claude.com/settings/keys">Settings → API keys</a> and click <span class="btnname">Create key</span>. Name it after your site. Leave the other options as they are unless you know you need them.</span></div></li>
+          <li class="hot"><div><b>Copy it now.</b><span>The key starts with <code>sk-ant-</code> and is shown only once.</span></div></li>
+          <li><div><b>Connect it in WordPress.</b><span>Under <b>Settings → Connectors</b>, click <b>Install</b> next to Anthropic, then paste the key. This installs the official <a href="https://wordpress.org/plugins/ai-provider-for-anthropic/">AI Provider for Anthropic</a> plugin. <a href="#wordpress">See how</a>.</span></div></li>
+        </ol>
+        <div class="mocks">
+          <figure>
+            <div class="browser" role="img" aria-label="Illustration: the Create API key form in the Claude Console with a name field filled in as My WordPress site.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">platform.claude.com/settings/keys</span></div>
+              <div class="pane">
+                <div class="ttl">Create API key</div>
+                <div class="frow"><span>Name</span><div class="finput">My WordPress site</div></div>
+                <div class="frow"><span>Expiration</span><div class="finput">Leave as is</div></div>
+                <span class="fbtn hl">Create key</span>
+              </div>
+            </div>
+            <figcaption>Step 4: a name you'll recognize later is all it needs.</figcaption>
+          </figure>
+          <figure>
+            <div class="browser" role="img" aria-label="Illustration: the new key shown once, starting with sk-ant-, with a Copy button.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">platform.claude.com/settings/keys</span></div>
+              <div class="pane">
+                <div class="ttl">Save your API key</div>
+                <div class="keyrow"><code>sk-ant-api03-Qm2••••••••••••••••</code><span class="fbtn hl"><svg class="i"><use href="#i-copy"/></svg>Copy</span></div>
+                <div class="warnline"><svg class="i"><use href="#i-alert"/></svg>This is the only time you'll see this key.</div>
+              </div>
+            </div>
+            <figcaption>Step 5: copy it before closing.</figcaption>
+          </figure>
+        </div>
+      </div>
+      <p class="note">Anthropic doesn't make images, so AI Chat's image generation isn't offered with this provider alone. Everything else works.</p>
+    </section>
+
+    <!-- ============ OPENROUTER ============ -->
+    <section id="openrouter" class="prov" style="--brand:#6467f2">
+      <h2><span class="n">6</span><span class="swatch"></span>OpenRouter</h2>
+      <ul class="badges">
+        <li class="good"><svg class="i"><use href="#i-gift"/></svg>Free models available</li>
+        <li class="good"><svg class="i"><use href="#i-card"/></svg>No card to start</li>
+        <li><svg class="i"><use href="#i-plug"/></svg>Needs a plugin</li>
+      </ul>
+      <div class="prose">
+        <p>OpenRouter is a go-between. One OpenRouter key reaches models from OpenAI, Anthropic, Google, Mistral and many others, with one bill. It's handy if you want to try different models without opening several accounts.</p>
+      </div>
+      <ol class="journey" aria-label="The whole path">
+        <li>Sign up</li><li>Create key</li><li>Copy</li><li class="wp">Install plugin</li><li class="wp">Paste in WordPress</li>
+      </ol>
+
+      <div class="walk">
+        <ol class="steps">
+          <li><div><b>Create an account.</b><span>Go to <a class="url" href="https://openrouter.ai/">openrouter.ai</a> and sign up with Google, GitHub or email.</span></div></li>
+          <li class="hot"><div><b>Create a key.</b><span>Open <a class="url" href="https://openrouter.ai/settings/keys">openrouter.ai/settings/keys</a> and click <span class="btnname">Create key</span>. Give it a name. You can also set a credit limit for this key, which is a good safety net.</span></div></li>
+          <li class="hot"><div><b>Copy it now.</b><span>The key starts with <code>sk-or-</code> and is shown only once.</span></div></li>
+          <li><div><b>Add credit when you're ready.</b><span>Free models work without paying, but they're slower and have tight daily limits. For everyday use, add a few dollars under <b>Credits</b>.</span></div></li>
+          <li><div><b>Install the OpenRouter plugin.</b><span>OpenRouter isn't on the Connectors screen until you add it. In <b>Plugins → Add New Plugin</b>, search for <a href="https://wordpress.org/plugins/ai-provider-for-openrouter/">AI Provider for OpenRouter</a> by Jonathan Bossenger, then install and activate it.</span></div></li>
+          <li><div><b>Paste the key into WordPress.</b><span>Under <b>Settings → Connectors</b>, choose <b>OpenRouter</b>. <a href="#wordpress">See how</a>.</span></div></li>
+        </ol>
+        <div class="mocks">
+          <figure>
+            <div class="browser" role="img" aria-label="Illustration: the OpenRouter create key form with a name field and an optional credit limit of 10 dollars.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">openrouter.ai/settings/keys</span></div>
+              <div class="pane">
+                <div class="ttl">Create a key</div>
+                <div class="frow"><span>Name</span><div class="finput">My WordPress site</div></div>
+                <div class="frow"><span>Credit limit (optional)</span><div class="finput">10</div></div>
+                <span class="fbtn hl">Create</span>
+              </div>
+            </div>
+            <figcaption>Step 2: a per-key credit limit caps what this site can ever spend.</figcaption>
+          </figure>
+        </div>
+      </div>
+      <p class="note">AI Chat does its work by calling editor tools, and not every model on OpenRouter supports tools well, especially free ones. If the chat replies but never changes the post, add credit so a stronger model can be used.</p>
+    </section>
+
+    <!-- ============ MISTRAL ============ -->
+    <section id="mistral" class="prov" style="--brand:#fa520f">
+      <h2><span class="n">7</span><span class="swatch"></span>Mistral</h2>
+      <ul class="badges">
+        <li class="good"><svg class="i"><use href="#i-gift"/></svg>Free mode</li>
+        <li class="good"><svg class="i"><use href="#i-card"/></svg>No card needed</li>
+        <li><svg class="i"><use href="#i-plug"/></svg>Needs a plugin</li>
+      </ul>
+      <ol class="journey" aria-label="The whole path">
+        <li>Sign up</li><li>Choose Free mode</li><li>Create key</li><li>Copy</li><li class="wp">Install plugin</li><li class="wp">Paste in WordPress</li>
+      </ol>
+
+      <div class="walk">
+        <ol class="steps">
+          <li><div><b>Open Mistral Studio.</b><span>Go to <a class="url" href="https://console.mistral.ai/">console.mistral.ai</a> and create an account.</span></div></li>
+          <li><div><b>Choose Free mode.</b><span>When asked for a plan, pick the free option. No card is needed. You can upgrade later if you hit the limits.</span></div></li>
+          <li class="hot"><div><b>Create a key.</b><span>In the left sidebar choose <b>API Keys</b>, then <span class="btnname">Create new key</span>. Name it, pick an expiration date, and for connector access choose <b>Shared connectors only</b>. Click <span class="btnname">Create new key</span>.</span></div></li>
+          <li class="hot"><div><b>Copy it now.</b><span>The full key appears only once.</span></div></li>
+          <li><div><b>Install the Mistral plugin.</b><span>Mistral isn't on the Connectors screen until you add it. In <b>Plugins → Add New Plugin</b>, search for <a href="https://wordpress.org/plugins/ai-provider-for-mistral/">AI Provider for Mistral</a> by Lauri Saarni, then install and activate it.</span></div></li>
+          <li><div><b>Paste the key into WordPress.</b><span>Under <b>Settings → Connectors</b>, choose <b>Mistral</b>. <a href="#wordpress">See how</a>.</span></div></li>
+        </ol>
+        <div class="mocks">
+          <figure>
+            <div class="browser" role="img" aria-label="Illustration: Mistral's create new key form with name, expiration and connector access options, Shared connectors only selected.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">console.mistral.ai/api-keys</span></div>
+              <div class="pane">
+                <div class="ttl">Create new key</div>
+                <div class="frow"><span>Name</span><div class="finput">My WordPress site</div></div>
+                <div class="frow"><span>Expiration</span><div class="finput">In 1 year</div></div>
+                <div class="frow"><span>Connector access</span>
+                  <div class="radio on"><i></i>Shared connectors only</div>
+                  <div class="radio"><i></i>Private and shared connectors</div>
+                </div>
+                <span class="fbtn hl">Create new key</span>
+              </div>
+            </div>
+            <figcaption>Step 3: WordPress doesn't need Mistral's connectors, so the narrower choice is safer.</figcaption>
+          </figure>
+        </div>
+      </div>
+      <p class="note">When the key expires, AI Chat stops answering. Put a reminder in your calendar, or create a new key and paste it in before the date.</p>
+    </section>
+
+    <!-- ============ WORDPRESS ============ -->
+    <section id="wordpress">
+      <h2><span class="n">8</span>Add the key to WordPress</h2>
+      <p>This part is the same for every provider, and you only do it once per site.</p>
+
+      <div class="walk wide" style="--brand:#2271b1">
+        <ol class="steps">
+          <li><div><b>Go to Settings → Connectors</b><span>in wp-admin. You need to be an administrator to see it.</span></div></li>
+          <li class="hot"><div><b>Click <span class="btnname">Install</span> next to your provider.</b><span>Google, OpenAI and Anthropic are always listed, and Install adds their official plugin in one click. OpenRouter and Mistral show up here once you've installed their plugin from the table below.</span></div></li>
+          <li class="hot"><div><b>Paste the key and save.</b><span>Paste into the API key field and save. Once saved, WordPress hides the key so it can't be read back from the screen.</span></div></li>
+          <li><div><b>Check it worked.</b><span>Open any post, click <b>AI Chat</b> in the top toolbar, and ask “Summarize the blocks in this post.” A reply means you're set.</span></div></li>
+        </ol>
+        <div class="mocks">
+          <figure>
+            <div class="mock-wp browser" role="img" aria-label="Illustration: the Settings, Connectors screen in wp-admin. Google is connected. OpenAI is open with its API key field filled in and a Save button. Anthropic is not connected.">
+              <div class="bar"><i></i><i></i><i></i><span class="addr">yoursite.com/wp-admin</span></div>
+              <div class="wpadmin">
+                <div class="menu">
+                  <div>Dashboard</div><div>Posts</div><div>Media</div><div>Pages</div><div>Plugins</div>
+                  <div class="cur">Settings</div>
+                  <div class="sub">General</div><div class="sub">Writing</div><div class="sub cur">Connectors</div>
+                </div>
+                <div class="body">
+                  <h4>Connectors</h4>
+                  <div class="conn" style="--brand:#1a73e8"><span class="logo"></span><b>Google</b><span class="desc">Gemini models</span><span class="cstate on">Connected</span></div>
+                  <div class="conn open" style="--brand:#10a37f"><span class="logo"></span><b>OpenAI</b><span class="desc">GPT models · <span class="gl">Get an API key</span></span>
+                    <div class="fields"><span class="wpin">sk-proj-4fG7••••••••••••</span><span class="wpbtn">Save</span></div>
+                  </div>
+                  <div class="conn" style="--brand:#d97757"><span class="logo"></span><b>Anthropic</b><span class="desc">Claude models</span><span class="wpbtn cstate">Install</span></div>
+                </div>
+              </div>
+            </div>
+            <figcaption>Illustration. Each provider also links to its own key page, in case you skipped ahead.</figcaption>
+          </figure>
+        </div>
+      </div>
+      <h3 style="margin-top:12px">Provider plugins</h3>
+      <p>Each provider needs its own small plugin. The first three are made by WordPress.org and appear on the Connectors screen automatically. The others come from community developers and are installed from <b>Plugins → Add New Plugin</b>.</p>
+      <div class="scroll-x">
+        <table class="tbl">
+          <thead><tr><th>Provider</th><th>Plugin</th><th>Where to install it</th></tr></thead>
+          <tbody>
+            <tr><td><span class="dotname" style="--brand:#1a73e8"><i></i>Google</span></td><td><a href="https://wordpress.org/plugins/ai-provider-for-google/">AI Provider for Google</a><br><small class="by">by WordPress.org</small></td><td><b>Install</b> on Settings → Connectors</td></tr>
+            <tr><td><span class="dotname" style="--brand:#10a37f"><i></i>OpenAI</span></td><td><a href="https://wordpress.org/plugins/ai-provider-for-openai/">AI Provider for OpenAI</a><br><small class="by">by WordPress.org</small></td><td><b>Install</b> on Settings → Connectors</td></tr>
+            <tr><td><span class="dotname" style="--brand:#d97757"><i></i>Anthropic</span></td><td><a href="https://wordpress.org/plugins/ai-provider-for-anthropic/">AI Provider for Anthropic</a><br><small class="by">by WordPress.org</small></td><td><b>Install</b> on Settings → Connectors</td></tr>
+            <tr><td><span class="dotname" style="--brand:#6467f2"><i></i>OpenRouter</span></td><td><a href="https://wordpress.org/plugins/ai-provider-for-openrouter/">AI Provider for OpenRouter</a><br><small class="by">by Jonathan Bossenger</small></td><td>Plugins → Add New Plugin</td></tr>
+            <tr><td><span class="dotname" style="--brand:#fa520f"><i></i>Mistral</span></td><td><a href="https://wordpress.org/plugins/ai-provider-for-mistral/">AI Provider for Mistral</a><br><small class="by">by Lauri Saarni</small></td><td>Plugins → Add New Plugin</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">The Connectors screen may also offer to install the <a href="https://wordpress.org/plugins/ai/">AI plugin</a>, WordPress's own set of AI features such as generated excerpts and alt text. Agentic Editor doesn't need it, but both can share the same connection.</p>
+      <p class="note">You can connect more than one provider. AI Chat picks a capable model from whichever are connected. Image generation is offered when one of them can make images, such as Google or OpenAI.</p>
+    </section>
+
+    <!-- ============ COSTS ============ -->
+    <section id="costs">
+      <h2><span class="n">9</span>Keep costs in check</h2>
+      <div class="prose">
+        <p>You pay the provider for what you use, not a monthly fee. A typical AI Chat request costs a fraction of a cent to a few cents, and one message can take several requests while the assistant works. Most sites spend very little, but a spending cap costs nothing to set up.</p>
+      </div>
+      <div class="limits">
+        <div style="--brand:#1a73e8"><b><i></i>Google Gemini</b><span>The free tier can't charge you. On the paid tier, set a budget alert in your Google Cloud billing account.</span></div>
+        <div style="--brand:#10a37f"><b><i></i>OpenAI</b><span>Prepaid, so you can't spend more than your balance. Keep auto recharge off, or set a monthly limit under <b>Limits</b>.</span></div>
+        <div style="--brand:#d97757"><b><i></i>Anthropic</b><span>Prepaid credits, so spending stops at your balance. Auto-reload is optional; leave it off for a hard ceiling.</span></div>
+        <div style="--brand:#6467f2"><b><i></i>OpenRouter</b><span>Prepaid credits, plus an optional credit limit on each key.</span></div>
+        <div style="--brand:#fa520f"><b><i></i>Mistral</b><span>Free mode can't charge you. Paid plans let you set usage limits in the console.</span></div>
+        <div><b>AI Chat itself</b><span>Each person is rate-limited, and a reply stops after a fixed number of steps, so a runaway tab can't run up a bill.</span></div>
+      </div>
+    </section>
+
+    <!-- ============ TROUBLE ============ -->
+    <section id="trouble">
+      <h2><span class="n">10</span>When it doesn't work</h2>
+      <div class="faq">
+        <div><b>“Invalid API key” or “unauthorized”</b><span>A character was probably missed. Copy the key again with the provider's copy button rather than selecting it by hand. If the key was only shown once and it's gone, delete it at the provider and create a new one.</span></div>
+        <div><b>Saved fine, but the chat says it can't answer</b><span>OpenAI and Anthropic keys don't work until the account has credit. Check the billing page and add some.</span></div>
+        <div><b>“Quota exceeded” or “rate limit”</b><span>You've hit a free tier's daily limit, or a new paid account's starting limit. Wait and try again, add credit, or upgrade the plan.</span></div>
+        <div><b>I pay for ChatGPT Plus or Claude Pro. Why is it asking me to pay?</b><span>Those subscriptions cover the chat apps only. The API behind this plugin is billed separately on the provider's developer site.</span></div>
+        <div><b>There's no Connectors screen</b><span>It arrived in WordPress 7.0. Update WordPress, and make sure you're logged in as an administrator.</span></div>
+        <div><b>OpenRouter or Mistral isn't listed</b><span>They need their plugin first: <a href="https://wordpress.org/plugins/ai-provider-for-openrouter/">AI Provider for OpenRouter</a> or <a href="https://wordpress.org/plugins/ai-provider-for-mistral/">AI Provider for Mistral</a>. Install and activate it, then reload Settings → Connectors.</span></div>
+        <div><b>The chat answers but never edits the post</b><span>The model in use may not support tools well. Try Gemini, OpenAI or Anthropic, or add credit on OpenRouter so a stronger model is used.</span></div>
+        <div><b>I think my key leaked</b><span>Delete it on the provider's key page right away. It stops working immediately. Create a new one and paste it into Settings → Connectors.</span></div>
+      </div>
+      <p class="note">Provider websites change their layouts from time to time. If a button has moved, look for “API keys” in the account or settings menu. Once you're connected, the <a href="../guide/">user guide</a> shows what to do next.</p>
+    </section>
+  </main>
+</div>
+
+<footer class="site-foot">
+  <span>Agentic Editor is free software, licensed under the GPL v2 or later.</span>
+  <span><a href="../">Download</a> · <a href="https://github.com/wpscholar/agentic-editor/issues">Report an issue</a></span>
+</footer>
+</body>
+</html>

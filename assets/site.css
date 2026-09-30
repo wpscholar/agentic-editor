@@ -191,6 +191,10 @@ pre.cmd { margin: 0; font-family: var(--mono); font-size: 13.5px; background: va
   .brand { font-size: 16px; }
   .site-nav { gap: 0; font-size: 14px; }
   .site-nav a { padding: 6px 7px; }
+}
+@media (max-width: 520px) {
+  .site-head { flex-wrap: wrap; row-gap: 10px; }
+  .site-nav { margin-left: -7px; }
   .trust { grid-template-columns: minmax(0, 1fr); }
   details.install summary small { display: none; }
 }
