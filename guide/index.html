@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agentic Editor User Guide</title>
+<meta name="description" content="How to use AI Chat in the WordPress block editor: attaching blocks, reading replies, approvals, and prompts that work well.">
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/mock.css">
+<link rel="stylesheet" href="../assets/guide.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.7-7.7a4 4 0 0 0-2-2z"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M10 9.5a2 2 0 1 1 2.5 2c-.4.2-.5.5-.5 1V13M12 16h.01"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></symbol>
+    <symbol id="i-stopc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/></symbol>
+    <symbol id="i-pointer" viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+
+<header class="site-head">
+  <a class="brand" href="../"><span class="mark"><svg class="i"><use href="#i-chat"/></svg></span>Agentic Editor</a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="../">Home</a>
+    <a href="./" aria-current="page">User guide</a>
+    <a href="https://github.com/wpscholar/agentic-editor">GitHub</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Contents">
+    <div class="eyebrow">Contents</div>
+    <ol>
+      <li><a href="#where">Where the chat lives</a></li>
+      <li><a href="#open">Opening and closing</a></li>
+      <li><a href="#attach">Attaching a block</a></li>
+      <li><a href="#nothing">When nothing is attached</a></li>
+      <li><a href="#reply">Reading a reply</a></li>
+      <li><a href="#approve">Approve or deny</a></li>
+      <li><a href="#recipes">Things to ask for</a></li>
+      <li><a href="#trouble">When it doesn't work</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="intro">
+      <div class="eyebrow">Agentic Editor · User guide</div>
+      <h1>Working with blocks through AI Chat</h1>
+      <p class="lede">AI Chat sits beside the block editor and can read and change the post you have open. Ask it in plain words to rewrite a paragraph, build a layout, move things around or reuse a pattern, and watch each step happen in the editor.</p>
+      <ul class="prereq">
+        <li><svg class="i"><use href="#i-checkc"/></svg>WordPress 7.0 or later</li>
+        <li><svg class="i"><use href="#i-checkc"/></svg>An AI provider under Settings → Connectors</li>
+        <li><svg class="i"><use href="#i-checkc"/></svg>An account that can edit posts</li>
+      </ul>
+    </header>
+
+    <section id="where">
+      <h2><span class="n">1</span>Where the chat lives</h2>
+      <p>AI Chat lives inside the block editor, so it's there whenever you're editing blocks.</p>
+      <div class="places">
+        <div class="place">
+          <span class="tools-tag">21 page tools</span>
+          <h3>Post and page editor</h3>
+          <div class="where">Posts → Add New, Pages → Edit…</div>
+          <p>Any post type that opens in the block editor. The chat reads and edits the blocks of the post you are editing.</p>
+        </div>
+        <div class="place">
+          <span class="tools-tag">21 page tools</span>
+          <h3>Site Editor</h3>
+          <div class="where">Appearance → Editor</div>
+          <p>Works on the template or template part you have open, with the same block tools as the post editor.</p>
+        </div>
+      </div>
+      <p class="note">The count is 22 on sites whose AI provider can also generate images. The chat does not appear on the Widgets screen or in the Customizer. Anyone who can edit posts can use it, including Contributors, unless your site has narrowed that.</p>
+    </section>
+
+    <section id="open">
+      <h2><span class="n">2</span>Opening and closing the chat</h2>
+      <p>In the editor, AI Chat is a sidebar, like the Settings sidebar. It opens on the right and takes the place of whatever sidebar was showing.</p>
+
+      <figure>
+        <div class="scroll-x">
+          <div class="mock" role="img" aria-label="The editor's top toolbar with the AI Chat button, two overlapping speech bubbles, highlighted between the View and Settings buttons.">
+            <div class="topbar">
+              <div class="tb back"><svg class="wpi" viewBox="0 0 24 24"><path d="M14.6 7l-1.2-1L8 12l5.4 6 1.2-1-4.6-5z"/></svg></div>
+              <div class="tb primary"><svg class="wpi" viewBox="0 0 24 24"><path d="M11 12.5V17.5H12.5V12.5H17.5V11H12.5V6H11V11H6V12.5H11Z"/></svg></div>
+              <div class="tb"><svg class="wpi" viewBox="0 0 24 24"><path d="M18.3 11.7c-.6-.6-1.4-.9-2.3-.9H6.7l2.9-3.3-1.1-1-4.5 5L8.5 16l1-1-2.7-2.7H16c.5 0 .9.2 1.3.5 1 1 1 3.4 1 4.5v.3h1.5v-.2c0-1.5 0-4.3-1.5-5.7z"/></svg></div>
+              <div class="tb dim"><svg class="wpi" viewBox="0 0 24 24"><path d="M15.6 6.5l-1.1 1 2.9 3.3H8c-.9 0-1.7.3-2.3.9-1.4 1.5-1.4 4.2-1.4 5.6v.2h1.5v-.3c0-1.1 0-3.5 1-4.5.3-.3.7-.5 1.3-.5h9.2L14.5 15l1.1 1.1 4.6-4.6-4.6-5z"/></svg></div>
+              <div class="tb"><svg class="wpi" viewBox="0 0 24 24"><path d="M3 6h11v1.5H3V6Zm3.5 5.5h11V13h-11v-1.5ZM21 17H10v1.5h11V17Z"/></svg></div>
+              <div class="docbar"><span>Spring Menu Launch <em>· Post</em></span></div>
+              <span class="btn-mock muted">Save draft</span>
+              <div class="tb"><svg class="wpi" viewBox="0 0 24 24"><path d="M20.5 16h-.7V8c0-1.1-.9-2-2-2H6.2c-1.1 0-2 .9-2 2v8h-.7c-.8 0-1.5.7-1.5 1.5h20c0-.8-.7-1.5-1.5-1.5zM5.7 8c0-.3.2-.5.5-.5h11.6c.3 0 .5.2.5.5v7.6H5.7V8z"/></svg></div>
+              <div class="tb hot"><svg class="wpi" viewBox="0 0 20 20" style="width:20px;height:20px"><path d="M11 6h-.82C9.07 6 8 7.2 8 8.16V10l-3 3v-3H3c-1.1 0-2-.9-2-2V3c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2v3zm0 1h6c1.1 0 2 .9 2 2v5c0 1.1-.9 2-2 2h-2v3l-3-3h-1c-1.1 0-2-.9-2-2V9c0-1.1.9-2 2-2z"/></svg><span class="callout">AI Chat</span></div>
+              <div class="tb"><svg class="wpi" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M18 4H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-4 14.5H6c-.3 0-.5-.2-.5-.5V6c0-.3.2-.5.5-.5h8v13zm4.5-.5c0 .3-.2.5-.5.5h-2.5v-13H18c.3 0 .5.2.5.5v12z"/></svg></div>
+              <span class="btn-mock pub">Publish</span>
+              <div class="tb"><svg class="wpi" viewBox="0 0 24 24"><path d="M13 19h-2v-2h2v2zm0-6h-2v-2h2v2zm0-6h-2V5h2v2z"/></svg></div>
+            </div>
+            <div style="height:46px"></div>
+          </div>
+        </div>
+        <figcaption>The AI Chat button, two overlapping speech bubbles, sits in the top toolbar between View and Settings.</figcaption>
+      </figure>
+
+      <ol class="steps">
+        <li><div><b>Open it</b> with the AI Chat button (two speech bubbles) in the top-right toolbar. You can also open the <b>⋮ Options</b> menu and choose <b>AI Chat</b> under <b>Panels</b>.</div></li>
+        <li><div><b>Close it</b> with the <b>×</b> in the sidebar's header, or click the AI Chat button again. Opening Settings or another sidebar also closes it, since only one sidebar shows at a time.</div></li>
+        <li><div><b>Closing ends the conversation.</b> The chat doesn't keep its history once the sidebar closes, and closing it mid-reply stops the reply. Leave it open while you work in the canvas; the edits it made stay in the post either way.</div></li>
+      </ol>
+
+      <h3 style="margin-top:12px">What's in the panel</h3>
+      <div class="anatomy">
+        <div class="mock" role="img" aria-label="The empty AI Chat panel with numbered markers on its parts.">
+          <div class="side-head">AI Chat <span class="tb"><svg class="i"><use href="#i-x"/></svg></span></div>
+          <div class="empty">
+            <div class="ic"><svg class="i"><use href="#i-chat"/></svg></div>
+            <b>Ask anything about Bakery Row.</b>
+            <span>The assistant can act on this screen using the tools it offers.</span>
+            <div class="sugg">Summarize the blocks in this post.</div>
+            <div class="sugg">Add a two-column layout below the first paragraph.</div>
+          </div>
+          <div class="composer">
+            <div class="ta">Ask about this site, or tell the assistant what to change…</div>
+            <div class="row">
+              <span class="iconbtn"><svg class="i"><use href="#i-clip"/></svg></span>
+              <span class="count">21 page tools</span>
+              <span class="mbtn ghost"><svg class="i"><use href="#i-trash"/></svg>Clear</span>
+              <span class="mbtn send"><svg class="i"><use href="#i-send"/></svg>Send</span>
+            </div>
+          </div>
+          <span class="pin" style="top:170px;left:8px">1</span>
+          <span class="pin" style="bottom:88px;left:8px">2</span>
+          <span class="pin" style="bottom:12px;left:0">3</span>
+          <span class="pin" style="bottom:36px;left:108px">4</span>
+          <span class="pin" style="bottom:36px;right:112px">5</span>
+          <span class="pin" style="bottom:36px;right:30px">6</span>
+        </div>
+        <dl class="keys">
+          <div><dt>1</dt><dd>Starter prompts</dd><dd>Shown until you send something. Click one to send it as is.</dd></div>
+          <div><dt>2</dt><dd>Message box</dd><dd>Press <span class="kbd">Enter</span> to send and <span class="kbd">Shift</span>+<span class="kbd">Enter</span> for a new line.</dd></div>
+          <div><dt>3</dt><dd>Paperclip</dd><dd>Attaches a block to your messages. Only in the editor; see the next section.</dd></div>
+          <div><dt>4</dt><dd>Tool count</dd><dd>How many editor tools the assistant can use. Hover it to see their names. If it says “No page tools”, the tools didn't load; reload the page.</dd></div>
+          <div><dt>5</dt><dd>Clear</dd><dd>Stops any reply in progress and starts a fresh conversation. Changes already made to the post stay.</dd></div>
+          <div><dt>6</dt><dd>Send</dd><dd>Turns into <b>Stop</b> while the assistant is working.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="attach">
+      <h2><span class="n">3</span>Attaching a block</h2>
+      <div class="prose">
+        <p>Attaching a block tells the assistant exactly which block you mean. Every message you send while it's attached carries that block's current content and settings, including any blocks nested inside it, so the assistant can start work right away without searching the whole post.</p>
+        <p>Nothing is attached until you click the paperclip. The block you happened to click before opening the chat isn't sent on its own.</p>
+      </div>
+
+      <div class="flow">
+        <div class="path">
+          <h3><span class="dot"></span>A block is already selected</h3>
+          <ol>
+            <li>Click the block in the editor so it's selected.</li>
+            <li>Click the paperclip.</li>
+            <li>It's attached straight away.</li>
+          </ol>
+          <div class="state">
+            <span class="cap">The composer shows</span>
+            <div class="chip"><svg class="i"><use href="#i-clip"/></svg><b>Attached</b><span class="lbl">Paragraph: Our spring menu arrives this…</span><span class="x"><svg class="i"><use href="#i-x"/></svg></span></div>
+          </div>
+        </div>
+        <div class="path alt">
+          <h3><span class="dot"></span>Nothing is selected</h3>
+          <ol>
+            <li>Click the paperclip. It stays pressed and the composer asks you to pick a block.</li>
+            <li>Click the block you want in the editor.</li>
+            <li>That block is attached. To give up instead, click the paperclip again.</li>
+          </ol>
+          <div class="state">
+            <span class="cap">While waiting for your click</span>
+            <div class="picking"><svg class="i"><use href="#i-clip"/></svg>Click a block in the editor to attach it…</div>
+            <div class="row"><span class="iconbtn pressed"><svg class="i"><use href="#i-clip"/></svg></span><span class="count">21 page tools</span></div>
+          </div>
+        </div>
+      </div>
+
+      <figure>
+        <div class="scroll-x">
+          <div class="mock" role="img" aria-label="The editor with a paragraph attached. The paragraph is outlined in the canvas, the chat composer shows it as attached, and the sent message is labelled with the attachment.">
+            <div class="editor">
+              <div class="canvas">
+                <div class="page">
+                  <div class="blk h">Spring Menu Launch</div>
+                  <div class="blk p sel"><span class="tag">Paragraph</span>Our spring menu arrives this Friday with rhubarb galettes, a pistachio morning bun, and the return of the lemon poppyseed loaf everyone keeps asking about.</div>
+                  <div class="blk img"></div>
+                  <div class="blk p">Stop by early. The morning buns sold out by ten last year.</div>
+                </div>
+              </div>
+              <div class="side">
+                <div class="side-head">AI Chat <span class="tb"><svg class="i"><use href="#i-x"/></svg></span></div>
+                <div class="transcript">
+                  <div class="bubble-user">Make this sound more excited, and keep it under 30 words.</div>
+                  <div class="msg-foot"><svg class="i" style="width:11px;height:11px"><use href="#i-clip"/></svg>Paragraph: Our spring menu arrives this…</div>
+                  <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_update-block</span><span class="st">Done</span></div>
+                  <div class="bubble-ai">Done. The paragraph now reads: “Spring is here! Rhubarb galettes, pistachio morning buns and your favorite lemon poppyseed loaf land this Friday.”</div>
+                  <div class="marker"><svg class="i"><use href="#i-checkc"/></svg>Done</div>
+                </div>
+                <div class="composer">
+                  <div class="chip"><svg class="i"><use href="#i-clip"/></svg><b>Attached</b><span class="lbl">Paragraph: Spring is here! Rhubarb…</span><span class="x"><svg class="i"><use href="#i-x"/></svg></span></div>
+                  <div class="ta">Ask about this site, or tell the assistant what to change…</div>
+                  <div class="row">
+                    <span class="iconbtn"><svg class="i"><use href="#i-clip"/></svg></span>
+                    <span class="count">21 page tools</span>
+                    <span class="mbtn ghost"><svg class="i"><use href="#i-trash"/></svg>Clear</span>
+                    <span class="mbtn send"><svg class="i"><use href="#i-send"/></svg>Send</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Your sent message is labelled with what was attached. The chip in the composer updates as the block changes, and it stays for the next message.</figcaption>
+      </figure>
+
+      <h3>How an attachment behaves</h3>
+      <div class="rules">
+        <div><b>It stays attached</b><span>Every message carries it until you remove it. You don't need to attach again for a follow-up.</span></div>
+        <div><b>It's always up to date</b><span>The assistant sees the block as it is now, including edits you or it made since you attached it.</span></div>
+        <div><b>Selecting doesn't change it</b><span>Clicking around the editor leaves the attachment alone. Only the paperclip changes what's attached.</span></div>
+        <div><b>Switching blocks</b><span>Select a different block, then click the paperclip. The new block replaces the old one.</span></div>
+        <div><b>Removing it</b><span>Click the <b>×</b> on the chip. Deleting the block from the post removes the attachment too.</span></div>
+        <div><b>One at a time</b><span>Only one block can be attached. To work on several, attach a Group or Columns block that contains them.</span></div>
+      </div>
+    </section>
+
+    <section id="nothing">
+      <h2><span class="n">4</span>When nothing is attached</h2>
+      <div class="prose">
+        <p>Without an attachment, the assistant is told nothing about which block is selected, not even that one is. It still has the whole post available: it reads the block tree or searches for blocks by their text, then works from what it finds.</p>
+        <p>That works well for requests about the whole post, or when you name the block by its words. It works poorly for “this” and “here”, because the assistant has no way to know what you're pointing at.</p>
+      </div>
+
+      <div class="compare">
+        <div class="mock">
+          <div class="label">Nothing attached <em class="meh">Has to guess</em></div>
+          <div class="transcript">
+            <div class="bubble-user">Make this shorter.</div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_get-editor-tree</span><span class="st">Done</span></div>
+            <div class="bubble-ai">Which part would you like shortened? The post has a heading, two paragraphs and an image.</div>
+          </div>
+        </div>
+        <div class="mock">
+          <div class="label">Nothing attached, named in words <em class="good">Works</em></div>
+          <div class="transcript">
+            <div class="bubble-user">Shorten the paragraph that starts “Our spring menu arrives”.</div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_find-editor-blocks</span><span class="st">Done</span></div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_update-block</span><span class="st">Done</span></div>
+            <div class="bubble-ai">Shortened it to one sentence.</div>
+          </div>
+        </div>
+      </div>
+      <p class="note">Rule of thumb: attach when you'd point at the screen. Skip it when you'd describe the whole post, or when a unique phrase finds the block.</p>
+    </section>
+
+    <section id="reply">
+      <h2><span class="n">5</span>Reading a reply</h2>
+      <div class="split">
+        <div class="mock" role="img" aria-label="A reply in progress: two finished tool calls, one running, and a status line saying Running editor_insert-block.">
+          <div class="transcript">
+            <div class="bubble-user">Add a two-column layout below the first paragraph, photo on the left and hours on the right.</div>
+            <div class="toolrow" style="color:var(--muted)"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-brain"/></svg><span style="flex:1;font-weight:500">Thinking</span></div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_get-editor-tree</span><span class="st">Done</span></div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_can-insert-block</span><span class="st">Done</span></div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><span class="spin"></span><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_insert-block</span><span class="st">Running</span></div>
+            <div class="marker"><span class="spin"></span>Running editor_insert-block…</div>
+          </div>
+        </div>
+        <div class="prose">
+          <p>Each step the assistant takes appears as a row in its reply. Click a row to see exactly what it sent and what came back. The edits land in the editor as each row finishes, so you can watch the post change.</p>
+          <p>Some providers also share the model's reasoning. It appears as a collapsed <b>Thinking</b> row above the answer.</p>
+          <p>A status line under the reply says what's happening: <b>Thinking…</b>, <b>Running</b> a tool, or <b>Waiting for your approval…</b>. When the reply ends it changes to <b>Done</b>, <b>Stopped</b> or <b>Did not finish</b>.</p>
+          <p><b>Changed your mind?</b> Click <b>Stop</b>. Anything already done stays done. Use the editor's <b>Undo</b> (or ask the chat to undo) to take it back. Each change is its own undo step, so a five-step edit takes five undos.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:12px">When a step fails</h3>
+      <div class="split">
+        <div class="mock" role="img" aria-label="A failed tool call expanded to show its input and a red error, followed by a successful retry and the assistant's answer.">
+          <div class="transcript">
+            <div class="tooldetail">
+              <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i bad"><use href="#i-alert"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_insert-block</span><span class="st bad">Failed</span></div>
+              <div class="body">
+                <div class="f"><span>Input</span><pre>{ "name": "core/column",
+  "rootClientId": "8c1f…" }</pre></div>
+                <div class="f"><span>Error</span><pre class="err">Block type "core/column" cannot be inserted into "core/columns" because that block is empty and is showing its placeholder, so it accepts no children yet. Insert a new "core/columns" with its children in a single call using innerBlocks, then remove the empty one.</pre></div>
+              </div>
+            </div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_insert-block</span><span class="st">Done</span></div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_remove-block</span><span class="st">Done</span></div>
+            <div class="bubble-ai">Added the two columns below the first paragraph, with the photo on the left and your hours on the right.</div>
+            <div class="marker"><svg class="i"><use href="#i-checkc"/></svg>Done</div>
+          </div>
+        </div>
+        <div class="prose">
+          <p>A failed step gets a red warning icon and the word <b>Failed</b>. Click the row to open it: <b>Input</b> shows what the assistant asked for, and <b>Error</b> shows why the editor said no, in plain words.</p>
+          <p>Failures are usually not a problem. The error goes back to the assistant too, and it often fixes the request and tries again on its own. In the example, it rebuilt the columns the way the editor wanted, cleaned up the empty block, and finished the job. You don't need to do anything.</p>
+          <p>If it can't find a way around the problem, it says so in its answer and explains what went wrong, such as a block that's locked or a block type that doesn't fit where you asked. Nothing is changed by a failed step, so the post is left as it was before that step.</p>
+        </div>
+      </div>
+
+      <div class="scroll-x">
+        <table class="tbl">
+          <thead><tr><th>Row says</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill"><span class="spin"></span>Running</span></td><td>The tool is working on the page now.</td></tr>
+            <tr><td><span class="pill ok"><svg class="i"><use href="#i-check"/></svg>Done</span></td><td>It finished. Expand the row for the result.</td></tr>
+            <tr><td><span class="pill wait"><svg class="i"><use href="#i-shield"/></svg>Waiting for approval</span></td><td>Nothing happens until you choose Approve or Deny below the row.</td></tr>
+            <tr><td><span class="pill"><svg class="i"><use href="#i-ban"/></svg>Denied</span></td><td>You said no. The assistant is told and carries on without it.</td></tr>
+            <tr><td><span class="pill bad"><svg class="i"><use href="#i-alert"/></svg>Failed</span></td><td>The editor refused that step. The assistant sees why and usually tries another way. See above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="approve">
+      <h2><span class="n">6</span>Approve or deny</h2>
+      <div class="split">
+        <div class="mock" role="img" aria-label="A tool call waiting for approval, with the reason and Approve and Deny buttons.">
+          <div class="transcript">
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i" style="color:var(--pick)"><use href="#i-shield"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_create-pattern</span><span class="st">Waiting for approval</span></div>
+            <div class="approve">
+              <span>Publishes a pattern on this site straight away, separately from this post. Undo in the editor will not remove it.</span>
+              <div class="row"><span class="mbtn send">Approve</span><span class="mbtn out">Deny</span></div>
+            </div>
+            <div class="marker"><span class="spin"></span>Waiting for your approval…</div>
+          </div>
+        </div>
+        <div class="prose">
+          <p>Most edits run without asking, because Undo takes them back. The chat pauses and asks first when Undo can't help:</p>
+          <ul class="plain">
+            <li><b>Saving a pattern.</b> A new pattern is published to the site immediately, outside this post, and Undo won't remove it.</li>
+            <li><b>Generating an image.</b> Your AI provider may bill for it, and the new file stays in the Media Library even if you undo placing it.</li>
+            <li><b>Raw HTML or scripts.</b> A Custom HTML block, a <code>&lt;script&gt;</code> tag, an <code>onclick</code>-style attribute or a <code>javascript:</code> link could run code for every visitor.</li>
+            <li><b>Tools from other plugins.</b> If another plugin added its own tools to the page, the chat can't vouch for what they do.</li>
+          </ul>
+          <p>The reason is shown above the buttons. Read it, then choose. If you didn't expect the request, especially raw HTML you never asked for, deny it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="recipes">
+      <h2><span class="n">7</span>Things to ask for</h2>
+      <p>Prompts that work well, grouped by whether you should attach a block first. The small labels show the tools the assistant usually reaches for. Copy one to try it.</p>
+
+      <div class="cases">
+        <div class="case">
+          <div class="top"><span class="goal">Get a summary of the post</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Summarize the blocks in this post.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>A read-only request. Useful first thing in a long post, or before asking for bigger changes.</p>
+          <div class="tools"><span>get-editor-tree</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Rewrite one block</span><span class="att yes"><svg class="i"><use href="#i-clip"/></svg>Attach it</span></div>
+          <pre class="prompt">Tighten this to two sentences and keep the friendly tone.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Works on paragraphs, headings, quotes, buttons and list items. Follow up with “a bit warmer” without attaching again.</p>
+          <div class="tools"><span>update-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Build a layout</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Add a two-column layout below the first paragraph: an image on the left, our opening hours on the right.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>The assistant builds the columns with their contents in one step, placed where you said.</p>
+          <div class="tools"><span>get-editor-tree</span><span>insert-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Convert a block</span><span class="att yes"><svg class="i"><use href="#i-clip"/></svg>Attach it</span></div>
+          <pre class="prompt">Turn this list into separate paragraphs.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Uses the block's own transforms, the same ones in the toolbar's block switcher, so the text carries over intact.</p>
+          <div class="tools"><span>transform-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Restyle a section</span><span class="att yes"><svg class="i"><use href="#i-clip"/></svg>Attach the Group</span></div>
+          <pre class="prompt">Give this section a dark background with light text and more padding.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Only the settings you mention change; the block's other styles are left as they were.</p>
+          <div class="tools"><span>get-block-type</span><span>update-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Rearrange the post</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Move the "Order ahead" buttons to the very end of the post.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Name blocks by their text and the assistant finds them. Locked blocks stay put, the same as when you drag them.</p>
+          <div class="tools"><span>find-editor-blocks</span><span>move-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Find and fix everywhere</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Every mention of "Bakery Row Cafe" should say "Bakery Row". Fix them all.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Search matches the words as shown in the editor, even inside bold or linked text.</p>
+          <div class="tools"><span>find-editor-blocks</span><span>update-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Use a theme pattern</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Find a hero pattern from this theme and add it at the top of the post.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Looks through the patterns your theme, plugins and site already have, instead of building one block at a time.</p>
+          <div class="tools"><span>get-patterns</span><span>insert-pattern</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Save a section for reuse</span><span class="att yes"><svg class="i"><use href="#i-clip"/></svg>Attach the Group</span></div>
+          <pre class="prompt">Save this section as a synced pattern called "Newsletter signup".<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Asks for your approval first, because the pattern is published to the site right away.</p>
+          <div class="tools"><span>create-pattern</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Use a photo you already have</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Add the lighthouse photo from the media library below the heading.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Searches the Media Library by title, alt text, caption and file name, so a file called IMG_1234 is still found by what it shows.</p>
+          <div class="tools"><span>search-media</span><span>insert-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Generate a new image</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Generate a warm, sunlit photo of a pistachio morning bun and use it as the image in this post.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Only on sites whose AI provider makes images. Asks for your approval first; the image is saved to the Media Library with alt text.</p>
+          <div class="tools"><span>generate-image</span><span>insert-block</span></div>
+        </div>
+
+        <div class="case">
+          <div class="top"><span class="goal">Take something back</span><span class="att no">No attachment</span></div>
+          <pre class="prompt">Undo the last two changes.<button class="copy" type="button" aria-label="Copy prompt"><svg class="i"><use href="#i-copy"/></svg></button></pre>
+          <p>Steps back through the editor's history, the same as pressing Undo in the toolbar.</p>
+          <div class="tools"><span>undo</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="trouble">
+      <h2><span class="n">8</span>When it doesn't work</h2>
+      <div class="faq">
+        <div><b>“No AI connector is configured”</b><span>The site has no AI provider yet. An administrator adds one under <b>Settings → Connectors</b>; the notice links there.</span></div>
+        <div><b>“No page tools” next to Send</b><span>The editor's tools didn't load, so the assistant can only talk. Reload the page.</span></div>
+        <div><b>No AI Chat button</b><span>Check <b>⋮ Options → Panels</b>. If AI Chat isn't listed, your account may not have access, or the plugin needs setting up; ask an administrator.</span></div>
+        <div><b>The assistant changed the wrong block</b><span>Press Undo, then attach the block you meant and ask again.</span></div>
+        <div><b>A row says Failed</b><span>Usually nothing to do: the assistant sees the error and tries another way. If its answer says it couldn't, expand the row for the reason.</span></div>
+        <div><b>The reply ends with “Did not finish”</b><span>The request errored or ran out of steps. Check what changed in the editor, then ask it to carry on or break the request into smaller parts.</span></div>
+        <div><b>The conversation has gone off track</b><span>Click <b>Clear</b> to start fresh. Your post keeps every change made so far.</span></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="site-foot">
+  <span>Agentic Editor is free software, licensed under the GPL v2 or later.</span>
+  <span><a href="../">Download</a> · <a href="https://github.com/wpscholar/agentic-editor/issues">Report an issue</a></span>
+</footer>
+
+<script src="../assets/copy.js"></script>
+</body>
+</html>

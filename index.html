@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agentic Editor</title>
+<meta name="description" content="A WordPress plugin that adds an AI Chat sidebar to the block editor. Describe a change in plain words and watch it happen, using your site's own AI provider.">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/mock.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.7-7.7a4 4 0 0 0-2-2z"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></symbol>
+    <symbol id="i-blocks" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><path d="M17 13v8M13 17h8"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4"/></symbol>
+  </defs>
+</svg>
+
+<header class="site-head">
+  <a class="brand" href="./"><span class="mark"><svg class="i"><use href="#i-chat"/></svg></span>Agentic Editor</a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="./" aria-current="page">Home</a>
+    <a href="guide/">User guide</a>
+    <a href="https://github.com/wpscholar/agentic-editor">GitHub</a>
+  </nav>
+</header>
+
+<main class="landing">
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">WordPress plugin</div>
+      <h1>Say what you want. Watch the block editor do it.</h1>
+      <p class="lede">Agentic Editor adds an AI Chat sidebar to the WordPress block editor. Describe a change in plain words and it rewrites, builds, rearranges and restyles the blocks in the post you have open, using the AI provider your site already has.</p>
+      <div class="ctas">
+        <a class="btn primary" href="https://github.com/wpscholar/agentic-editor/releases/latest/download/agentic-editor.zip"><svg class="i"><use href="#i-download"/></svg>Download <span data-version hidden></span></a>
+        <a class="btn secondary" href="guide/"><svg class="i"><use href="#i-book"/></svg>Read the user guide</a>
+      </div>
+      <ul class="meta">
+        <li><svg class="i"><use href="#i-checkc"/></svg>WordPress 7.0 or later</li>
+        <li><svg class="i"><use href="#i-checkc"/></svg>PHP 8.0 or later</li>
+        <li><svg class="i"><use href="#i-checkc"/></svg>Free and open source</li>
+      </ul>
+    </div>
+
+    <div class="mock" role="img" aria-label="The block editor with the AI Chat sidebar open. The user asked for a two-column layout; the assistant checked the post, inserted the columns, and confirmed.">
+      <div class="editor">
+        <div class="canvas">
+          <div class="page">
+            <div class="blk h">Spring Menu Launch</div>
+            <div class="blk p">Our spring menu arrives this Friday with rhubarb galettes and a pistachio morning bun.</div>
+            <div class="blk sel" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><span class="tag">Columns</span>
+              <div class="blk img" style="margin:0"></div>
+              <div class="blk p" style="margin:0;font-size:12px"><b>Hours</b><br>Tue–Fri 7–3<br>Sat–Sun 8–2</div>
+            </div>
+            <div class="blk p">Stop by early. The morning buns sold out by ten last year.</div>
+          </div>
+        </div>
+        <div class="side">
+          <div class="side-head">AI Chat <span class="tb"><svg class="i"><use href="#i-x"/></svg></span></div>
+          <div class="transcript">
+            <div class="bubble-user">Add two columns below the first paragraph: a photo on the left, our hours on the right.</div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_get-editor-tree</span><span class="st">Done</span></div>
+            <div class="toolrow"><svg class="i"><use href="#i-chev"/></svg><svg class="i"><use href="#i-check"/></svg><svg class="i"><use href="#i-wrench"/></svg><span class="name">editor_insert-block</span><span class="st">Done</span></div>
+            <div class="bubble-ai">Added a two-column layout below the first paragraph, with a photo placeholder on the left and your hours on the right.</div>
+            <div class="marker"><svg class="i"><use href="#i-checkc"/></svg>Done</div>
+          </div>
+          <div class="composer">
+            <div class="ta">Ask about this site, or tell the assistant what to change…</div>
+            <div class="row">
+              <span class="iconbtn"><svg class="i"><use href="#i-clip"/></svg></span>
+              <span class="count">21 page tools</span>
+              <span class="mbtn send"><svg class="i"><use href="#i-send"/></svg>Send</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="what">
+    <div class="band-head">
+      <h2 id="what">What it does</h2>
+      <p>Ask for a change the way you'd ask a colleague. Each step shows up in the chat as it happens, and each edit lands in the editor like one you made yourself.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <span class="ic"><svg class="i"><use href="#i-chat"/></svg></span>
+        <h3>AI Chat beside your blocks</h3>
+        <p>A sidebar in the post, page and site editors. Point it at a block with the paperclip, or describe what you mean, and it gets to work on the live post.</p>
+      </div>
+      <div class="feature">
+        <span class="ic"><svg class="i"><use href="#i-blocks"/></svg></span>
+        <h3>Knows how blocks work</h3>
+        <p>Twenty-one editor tools cover reading the post, adding, moving, restyling and converting blocks, reusing your patterns and finding images in the Media Library. It can generate images too when your provider supports it.</p>
+        <div class="chips"><span>insert-block</span><span>move-block</span><span>transform-block</span><span>insert-pattern</span><span>search-media</span></div>
+      </div>
+      <div class="feature">
+        <span class="ic"><svg class="i"><use href="#i-plug"/></svg></span>
+        <h3>Open to browser agents</h3>
+        <p>The same tools are published through WebMCP, so any browser AI agent that supports it can work in the editor too. A polyfill covers browsers without native support.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="control">
+    <div class="band-head">
+      <h2 id="control">You stay in control</h2>
+      <p>The assistant plays by the same rules you do, and it asks before doing anything Undo can't take back.</p>
+    </div>
+    <div class="trust">
+      <div><b>Your site's own AI provider</b><span>Requests go through WordPress's AI Client and the provider set up under Settings → Connectors. The plugin needs no API key of its own.</span></div>
+      <div><b>Every edit can be undone</b><span>Changes are ordinary editor edits. Press Undo, or ask the chat to undo them.</span></div>
+      <div><b>Asks before anything permanent</b><span>Saving a pattern, generating an image, raw HTML or scripts, and tools added by other plugins all wait for your Approve or Deny.</span></div>
+      <div><b>Locked blocks stay locked</b><span>It can't move, edit or remove anything the editor wouldn't let you change.</span></div>
+      <div><b>Images come from your library</b><span>It uses files from your Media Library, never images it finds or invents on the web. Generated images are saved there first.</span></div>
+      <div><b>Updates in wp-admin</b><span>New releases show up on the Plugins screen like any other plugin update.</span></div>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="install-h">
+    <div class="band-head">
+      <h2 id="install-h">Get started</h2>
+      <p>Download the plugin, upload it to your site, and connect an AI provider if you haven't already.</p>
+    </div>
+    <details class="install">
+      <summary><svg class="i chev"><use href="#i-chev"/></svg>Installation instructions<small>About two minutes</small></summary>
+      <div class="install-body">
+        <h3>Before you start</h3>
+        <ul class="meta">
+          <li><svg class="i"><use href="#i-checkc"/></svg>WordPress 7.0 or later</li>
+          <li><svg class="i"><use href="#i-checkc"/></svg>PHP 8.0 or later</li>
+          <li><svg class="i"><use href="#i-checkc"/></svg>An administrator account</li>
+        </ul>
+
+        <h3>Install the plugin</h3>
+        <ol>
+          <li><a href="https://github.com/wpscholar/agentic-editor/releases/latest/download/agentic-editor.zip">Download <code>agentic-editor.zip</code></a>. Leave it zipped.</li>
+          <li>In wp-admin, go to <b>Plugins → Add New Plugin</b> and click <b>Upload Plugin</b>.</li>
+          <li>Choose the zip file, click <b>Install Now</b>, then <b>Activate Plugin</b>.</li>
+        </ol>
+
+        <h3>Connect an AI provider</h3>
+        <ol>
+          <li>Go to <b>Settings → Connectors</b>.</li>
+          <li>Set up a provider, such as Google, OpenAI or Anthropic, with its API key.</li>
+        </ol>
+        <p>Skip this if your site already has one. Without a provider, the chat opens but explains that it can't answer yet.</p>
+
+        <h3>Try it</h3>
+        <ol>
+          <li>Open any post or page in the block editor.</li>
+          <li>Click the <b>AI Chat</b> button (two speech bubbles) in the top toolbar.</li>
+          <li>Ask it to “Summarize the blocks in this post.” The <a href="guide/">user guide</a> covers the rest.</li>
+        </ol>
+
+        <h3>Or use WP-CLI</h3>
+        <pre class="cmd">wp plugin install https://github.com/wpscholar/agentic-editor/releases/latest/download/agentic-editor.zip --activate</pre>
+
+        <h3>Updates</h3>
+        <p>Once installed, new releases appear on the Plugins screen and update like any other plugin. There's nothing more to download by hand.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="band cta-band" aria-labelledby="cta">
+    <h2 id="cta">Ready to try it?</h2>
+    <div class="ctas">
+      <a class="btn primary" href="https://github.com/wpscholar/agentic-editor/releases/latest/download/agentic-editor.zip"><svg class="i"><use href="#i-download"/></svg>Download <span data-version hidden></span></a>
+      <a class="btn secondary" href="guide/"><svg class="i"><use href="#i-book"/></svg>Read the user guide</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <span>Agentic Editor is free software, licensed under the GPL v2 or later.</span>
+  <span><a href="https://github.com/wpscholar/agentic-editor/releases">All releases</a> · <a href="https://github.com/wpscholar/agentic-editor/issues">Report an issue</a></span>
+</footer>
+
+<script src="assets/version.js"></script>
+</body>
+</html>
