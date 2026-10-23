@@ -107,6 +107,7 @@ The design (one model turn per request, the browser owning the loop, native and 
 
 - Always `wp_enqueue_script_module( '@wordpress/abilities' )` so the import map exists
 - Register shared modules on `init` (see `agentic_editor_register_chat_modules`) so any screen that mounts the chat can enqueue them
+- The ability modules follow the same split: `agentic_editor_register_editor_abilities()` registers them on `init`, and `agentic_editor_enqueue_abilities()` enqueues them with no screen check. Keep the post and site editor guard in the `enqueue_block_editor_assets` callback, not in that function, since other editors call it
 - Import submodules by their import-map ID, never by relative path. A relative import produces a second copy of the module under a different URL, which silently splits module-level state such as the local tool registry
 - Script modules cannot be localized — pass data with the `script_module_data_{$module_id}` filter and read the JSON tag on the client
 - Any screen showing the chat must also `wp_enqueue_script()` the `react`, `react-dom`, and `react-jsx-runtime` handles, and enqueue the built entry as a **script module**, since it imports the two externals by their import-map IDs. `agentic_editor_enqueue_chat()` does both
@@ -170,7 +171,7 @@ To add an ability:
 To add a new abilities module:
 
 1. Create `js/abilities/<name>.js` exporting `register<Name>Abilities()` (a one-line `registerAbilities( LIST )`), importing helpers from `@agentic-editor/abilities/shared` (the import-map ID, never a relative path)
-2. Register it in `agentic_editor_enqueue_editor_abilities()` in `agentic-editor.php` with `wp_register_script_module( '@agentic-editor/abilities/<name>', … )`, and add that ID to the dependencies of `@agentic-editor/abilities`
+2. Register it in `agentic_editor_register_editor_abilities()` in `agentic-editor.php` with `wp_register_script_module( '@agentic-editor/abilities/<name>', … )`, and add that ID to the dependencies of `@agentic-editor/abilities`
 3. Spread its result into `registerEditorAbilities()` in `js/abilities.js`. `tsconfig.js.json` already maps `@agentic-editor/abilities/*` for `checkJs`
 
 The chat picks up new abilities automatically — they are just more WebMCP tools.

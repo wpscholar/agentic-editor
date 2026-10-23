@@ -58,25 +58,19 @@ function agentic_editor_is_supported_editor() {
 }
 
 /**
- * Enqueue editor abilities script module on block editor screens.
+ * Register the editor abilities script modules.
  *
  * Submodules are registered as dependencies rather than imported by relative
  * path so that WordPress resolves them through the import map, where each one
  * carries its own version query.
  *
+ * Registration is separate from enqueueing so that a screen other than the
+ * post or site editor can load the abilities with
+ * agentic_editor_enqueue_abilities().
+ *
  * @return void
  */
-function agentic_editor_enqueue_editor_abilities() {
-	if ( ! agentic_editor_is_supported_editor() ) {
-		return;
-	}
-
-	// Ensure the Abilities client (and its import map entry) are available.
-	wp_enqueue_script_module( '@wordpress/abilities' );
-
-	// Installs `document.modelContext` for the bridge to register tools into.
-	wp_enqueue_script( 'agentic-editor-webmcp-polyfill' );
-
+function agentic_editor_register_editor_abilities() {
 	wp_register_script_module(
 		'@agentic-editor/abilities/shared',
 		AGENTIC_EDITOR_PLUGIN_URL . 'js/abilities/shared.js',
@@ -105,9 +99,6 @@ function agentic_editor_enqueue_editor_abilities() {
 		agentic_editor_asset_version( 'js/abilities/media.js' )
 	);
 
-	// The apiFetch global the media abilities call the image endpoint with.
-	wp_enqueue_script( 'wp-api-fetch' );
-
 	wp_register_script_module(
 		'@agentic-editor/abilities',
 		AGENTIC_EDITOR_PLUGIN_URL . 'js/abilities.js',
@@ -131,7 +122,7 @@ function agentic_editor_enqueue_editor_abilities() {
 		agentic_editor_asset_version( 'js/webmcp-bridge.js' )
 	);
 
-	wp_enqueue_script_module(
+	wp_register_script_module(
 		'@agentic-editor/editor-abilities',
 		AGENTIC_EDITOR_PLUGIN_URL . 'js/index.js',
 		array(
@@ -141,6 +132,43 @@ function agentic_editor_enqueue_editor_abilities() {
 		),
 		agentic_editor_asset_version( 'js/index.js' )
 	);
+}
+add_action( 'init', 'agentic_editor_register_editor_abilities' );
+
+/**
+ * Enqueue the editor abilities and bridge them to WebMCP.
+ *
+ * The post and site editors get this automatically. Call it from any other
+ * screen that runs a block editor, such as a plugin's own full-page editor,
+ * to give that editor the same tools. Each ability checks for the block
+ * editor store when it runs, not when it loads.
+ *
+ * @return void
+ */
+function agentic_editor_enqueue_abilities() {
+	// Ensure the Abilities client (and its import map entry) are available.
+	wp_enqueue_script_module( '@wordpress/abilities' );
+
+	// Installs `document.modelContext` for the bridge to register tools into.
+	wp_enqueue_script( 'agentic-editor-webmcp-polyfill' );
+
+	// The apiFetch global the media abilities call the image endpoint with.
+	wp_enqueue_script( 'wp-api-fetch' );
+
+	wp_enqueue_script_module( '@agentic-editor/editor-abilities' );
+}
+
+/**
+ * Enqueue the editor abilities on the post and site editors.
+ *
+ * @return void
+ */
+function agentic_editor_enqueue_editor_abilities() {
+	if ( ! agentic_editor_is_supported_editor() ) {
+		return;
+	}
+
+	agentic_editor_enqueue_abilities();
 }
 add_action( 'enqueue_block_editor_assets', 'agentic_editor_enqueue_editor_abilities' );
 
