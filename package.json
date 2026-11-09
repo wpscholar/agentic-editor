@@ -23,7 +23,7 @@
     "format": "prettier --write \"js/**/*.js\" \"src/**/*.{ts,tsx}\" \"tests/**/*.ts\" \"*.{ts,mjs}\""
   },
   "devDependencies": {
-    "@mcp-b/webmcp-polyfill": "^5.1.0",
+    "@mcp-b/webmcp-polyfill": "^6.0.3",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.3.4",
     "@types/react": "^18.3.31",
