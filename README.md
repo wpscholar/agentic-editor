@@ -117,6 +117,23 @@ React itself is **not** bundled. WordPress already puts React 18.3 on the page, 
 
 Tailwind is loaded without Preflight, since that reset would strip WordPress's own admin styling off any screen the chat appears on. The styles the components need are re-applied scoped to `.cdchat`.
 
+### Using the abilities elsewhere
+
+The abilities load on the post and site editors. A plugin with its own block editor screen can load them there too:
+
+```php
+add_action(
+	'admin_enqueue_scripts',
+	function ( $hook_suffix ) {
+		if ( 'appearance_page_my-editor' === $hook_suffix && function_exists( 'agentic_editor_enqueue_abilities' ) ) {
+			agentic_editor_enqueue_abilities();
+		}
+	}
+);
+```
+
+The modules are registered on `init`, so call it any time after that. Each ability checks for the `core/block-editor` store when it runs, not when it loads, so the editor only has to be on the page by the time a tool is called.
+
 ### Using the chat elsewhere
 
 Add an entry under `src/entries/` that renders `<ChatPanel />`, register it in `vite.config.ts`, and enqueue it:
