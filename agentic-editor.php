@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Agentic Editor
  * Description:       Registers client-side block editor abilities, bridges them to WebMCP, and adds an AI chat panel powered by the WordPress AI Client.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 7.0
  * Requires PHP:      8.0
  * Author:            Micah Wood
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-defined( 'AGENTIC_EDITOR_VERSION' ) || define( 'AGENTIC_EDITOR_VERSION', '0.1.0' );
+defined( 'AGENTIC_EDITOR_VERSION' ) || define( 'AGENTIC_EDITOR_VERSION', '0.2.0' );
 defined( 'AGENTIC_EDITOR_PLUGIN_FILE' ) || define( 'AGENTIC_EDITOR_PLUGIN_FILE', __FILE__ );
 defined( 'AGENTIC_EDITOR_PLUGIN_DIR' ) || define( 'AGENTIC_EDITOR_PLUGIN_DIR', plugin_dir_path( AGENTIC_EDITOR_PLUGIN_FILE ) );
 defined( 'AGENTIC_EDITOR_PLUGIN_URL' ) || define( 'AGENTIC_EDITOR_PLUGIN_URL', plugin_dir_url( AGENTIC_EDITOR_PLUGIN_FILE ) );
