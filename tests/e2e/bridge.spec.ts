@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
+import { openEditor } from './open-editor';
 
 const EXPECTED_TOOLS = [
 	'editor_get-editor-tree',
@@ -118,4 +119,55 @@ test( 'an unknown tool is reported, not thrown', async ( { callTool } ) => {
 
 	expect( result.isError ).toBe( true );
 	expect( result.text ).toContain( 'Unknown tool' );
+} );
+
+test( 'discovers and runs a tool registered by another script', async ( {
+	editor,
+} ) => {
+	const result = await editor.evaluate( async () => {
+		const context = ( document as any ).modelContext;
+		await context.registerTool( {
+			name: 'external_echo',
+			description: 'Echo an argument',
+			inputSchema: { type: 'object' },
+			execute: ( input: { message: string } ) => ( {
+				content: [ { type: 'text', text: input.message } ],
+			} ),
+		} );
+		const toolsId = '@agentic-editor/webmcp-tools';
+		const { listTools, callTool } = await import( toolsId );
+		return {
+			listed: ( await listTools() ).some(
+				( tool: { name: string } ) => tool.name === 'external_echo'
+			),
+			result: await callTool( 'external_echo', { message: 'hello' } ),
+		};
+	} );
+
+	expect( result.listed ).toBe( true );
+	expect( result.result ).toMatchObject( { isError: false, text: 'hello' } );
+} );
+
+test( 'uses a partial native context and keeps local tools callable', async ( {
+	page,
+}, testInfo ) => {
+	await page.addInitScript( () => {
+		const context = { registerTool: async () => {} };
+		Object.defineProperty( document, 'modelContext', { value: context } );
+	} );
+	await openEditor( page, testInfo.timeout / 2 );
+	const result = await page.evaluate( async () => {
+		const id = '@agentic-editor/webmcp-tools';
+		const { listTools, callTool } = await import( id );
+		return {
+			status: ( window as any ).agenticEditorAbilities.webmcp,
+			tools: await listTools(),
+			result: await callTool( 'editor_get-editor-tree' ),
+			context: Object.keys( ( document as any ).modelContext ),
+		};
+	} );
+	expect( result.context ).toEqual( [ 'registerTool' ] );
+	expect( result.status.errors ).toEqual( [] );
+	expect( result.tools.length ).toBeGreaterThan( 0 );
+	expect( result.result.isError ).toBe( false );
 } );

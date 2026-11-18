@@ -65,7 +65,7 @@ Two goals:
 
 ### WebMCP polyfill
 
-- The polyfill is vendored from `@mcp-b/webmcp-polyfill` and enqueued as a **classic script**, not a module. Its ESM build imports `@cfworker/json-schema` as a bare specifier that nothing here would resolve; the IIFE build inlines it and self-initializes on load
+- The polyfill is vendored from `@w3c/webmcp-polyfill` and enqueued as a **classic script**, not a module. Its standalone IIFE build self-initializes on load
 - Do not edit `js/vendor/` by hand — run `npm run vendor`
 - Classic scripts execute before deferred modules, so `document.modelContext` is present by the time modules run. Never add `defer`/`async` to the polyfill handle
 - Anything that registers or consumes WebMCP tools must enqueue `agentic-editor-webmcp-polyfill`
