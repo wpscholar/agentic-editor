@@ -23,8 +23,6 @@ declare module '@wordpress/abilities' {
 interface Window {
 	wp?: any;
 	agenticEditorAbilities?: unknown;
-	/** The vendored polyfill's IIFE global. */
-	WebMCPPolyfill?: unknown;
 }
 
 /** The parts of WebMCP's ModelContext that js/ uses. */
@@ -33,7 +31,7 @@ interface ModelContext {
 		tool: Record< string, unknown >
 	) => Promise< unknown > | unknown;
 	getTools?: () => Promise< any[] >;
-	executeTool?: ( tool: unknown, inputJson: string ) => Promise< unknown >;
+	executeTool?: ( tool: unknown, input: object ) => Promise< unknown >;
 	addEventListener?: ( type: string, listener: () => void ) => void;
 }
 

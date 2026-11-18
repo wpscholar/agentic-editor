@@ -10,7 +10,7 @@ On block editor screens the plugin:
 
 1. Registers a `block-editor` ability category
 2. Registers twenty-one editor abilities (inspect / query / mutate the live editor), plus `editor/generate-image` when the site's AI connector can generate images
-3. Bridges each ability to `document.modelContext.registerTool()`, installing the [WebMCP polyfill](https://www.npmjs.com/package/@mcp-b/webmcp-polyfill) when the browser has no native support
+3. Bridges each ability to `document.modelContext.registerTool()`, installing the [WebMCP polyfill](https://www.npmjs.com/package/@w3c/webmcp-polyfill) when the browser has no native support
 4. Adds an **AI Chat** sidebar that can call those tools
 
 | Ability | WebMCP tool name | Purpose |
@@ -192,7 +192,7 @@ js/
   webmcp-polyfill.js       # getModelContext(): finds the model context; installs nothing
   webmcp-tools.js          # Consumer side: list and call the page's tools
   chat/config.js           # Server config, read from the script module data tag
-  vendor/webmcp-polyfill/  # Vendored standalone build of @mcp-b/webmcp-polyfill
+  vendor/webmcp-polyfill/  # Vendored standalone build of @w3c/webmcp-polyfill
 src/                       # The chat panel (built with Vite into build/)
   chat/transport.ts        # AI SDK ChatTransport: one REST turn per round + tool loop
   chat/approval.ts         # Which tool calls wait for Approve/Deny
@@ -306,7 +306,7 @@ The answer is cached for six hours (one after a failed lookup), because GitHub a
 - [WebMCP (Chrome)](https://developer.chrome.com/docs/ai/webmcp)
 - [WebMCP Imperative API](https://developer.chrome.com/docs/ai/webmcp/imperative-api)
 - [`@wordpress/abilities` package reference](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-abilities/)
-- [`@mcp-b/webmcp-polyfill`](https://www.npmjs.com/package/@mcp-b/webmcp-polyfill) ([reference](https://docs.mcp-b.ai/packages/webmcp-polyfill/reference))
+- [`@w3c/webmcp-polyfill`](https://www.npmjs.com/package/@w3c/webmcp-polyfill)
 - [shadcn/ui](https://ui.shadcn.com) — the chat components ([Message](https://ui.shadcn.com/docs/components/message))
 - [AI SDK: Transport](https://ai-sdk.dev/docs/ai-sdk-ui/transport) — the `ChatTransport` contract
 - [React 19 punted beyond WordPress 7.1](https://make.wordpress.org/core/2026/07/24/react-19-punted-beyond-wordpress-7-1-experiment-in-gutenberg/) — why React is not bundled

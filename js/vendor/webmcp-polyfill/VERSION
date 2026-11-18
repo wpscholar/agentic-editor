@@ -1,2 +1,2 @@
-@mcp-b/webmcp-polyfill 5.1.0 (dist/index.iife.js)
+@w3c/webmcp-polyfill 0.1.1 (dist/polyfill.js)
 Vendored by bin/vendor-webmcp-polyfill.sh — do not edit by hand.

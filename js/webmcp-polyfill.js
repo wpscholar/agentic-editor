@@ -9,7 +9,7 @@
  *
  * This module only reports on that environment; it never installs anything.
  *
- * @see https://www.npmjs.com/package/@mcp-b/webmcp-polyfill
+ * @see https://www.npmjs.com/package/@w3c/webmcp-polyfill
  */
 
 /**

@@ -273,7 +273,7 @@ describe( 'webmcp-tools', () => {
 			} );
 		} );
 
-		it( 'runs a discovered tool through executeTool with serialized arguments', async () => {
+		it( 'runs a discovered tool through executeTool with object arguments', async () => {
 			const record = { name: 'shop_add' };
 			const executeTool = vi.fn(
 				async () =>
@@ -287,7 +287,7 @@ describe( 'webmcp-tools', () => {
 
 			const result = await tools.callTool( 'shop_add', { id: 'x' } );
 
-			expect( executeTool ).toHaveBeenCalledWith( record, '{"id":"x"}' );
+			expect( executeTool ).toHaveBeenCalledWith( record, { id: 'x' } );
 			expect( result ).toEqual( {
 				isError: false,
 				value: { count: 2 },

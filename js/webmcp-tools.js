@@ -295,7 +295,7 @@ export async function callTool( name, args = {} ) {
 			}
 			const serialized = await modelContext.executeTool(
 				tool,
-				JSON.stringify( args ?? {} )
+				args ?? {}
 			);
 			return normalizeToolResult( parseMaybeJson( serialized ) );
 		}
